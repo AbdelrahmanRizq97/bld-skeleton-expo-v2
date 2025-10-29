@@ -39,3 +39,14 @@ yarn-error.*
 
 expo-env.d.ts
 # @end expo-cli
+
+# Sandbox & system caches
+.bun/
+.cache/
+.config/
+.local/
+.npm/
+**/.npm/
+**/.cache/
+**/.local/
+**/.bun/
