@@ -31,9 +31,7 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": [
-      "expo-router"
-    ],
+    "plugins": [], // LLMs should NEVER attempt to modify 'plugins' array. it must stay empty.
     "experiments": {
       "typedRoutes": true
     }
