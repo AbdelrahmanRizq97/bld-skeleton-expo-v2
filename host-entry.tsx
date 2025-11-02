@@ -11,6 +11,8 @@
 
 import { AppRegistry } from 'react-native';
 
+console.log('Micro: host-entry.tsx');
+
 const mod = require('./host-root.tsx');
 const App = mod.default ?? mod.App ?? mod.Root ?? mod;
 
@@ -19,4 +21,8 @@ if (typeof App !== 'function') {
   throw new Error('host-root must default-export a React component');
 }
 
-AppRegistry.registerComponent('MicroMain', () => App);
+AppRegistry.registerComponent('MicroMain', () => {
+  console.log('Micro: Returning App from registerComponent');
+  return App;
+});
+console.log('Micro: host-entry.tsx registered');
