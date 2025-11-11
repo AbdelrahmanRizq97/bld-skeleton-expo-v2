@@ -50,3 +50,20 @@ expo-env.d.ts
 **/.cache/
 **/.local/
 **/.bun/
+
+# AI/dev tools and prompts
+.claude/
+.claude.json
+.claude.json.backup
+
+# Export/bundle artifacts
+app-export.zip
+repo.bundle
+repo.bundle.b64
+bld-export*/
+bld-export*/*
+
+# Shell profiles
+.bash_logout
+.bashrc
+.profile
