@@ -47,6 +47,7 @@ function MicroThemeIsolator({ children }: { children: React.ReactNode }) {
   const originalsRef = useRef<{
     get?: any;
     set?: any;
+    addListener?: any;
   }>({});
 
   useEffect(() => {
@@ -54,6 +55,7 @@ function MicroThemeIsolator({ children }: { children: React.ReactNode }) {
     const RN_Appearance = Appearance;
     originalsRef.current.get = RN_Appearance.getColorScheme?.bind(RN_Appearance);
     originalsRef.current.set = RN_Appearance.setColorScheme?.bind(RN_Appearance);
+    originalsRef.current.addListener = RN_Appearance.addChangeListener?.bind(RN_Appearance);
 
     // Override getters/setters locally
     RN_Appearance.getColorScheme = () => theme;
@@ -68,6 +70,14 @@ function MicroThemeIsolator({ children }: { children: React.ReactNode }) {
       // Do NOT forward to original setter to avoid changing host/super app
       return undefined;
     };
+
+    // Ensure NativeWind/react-native-css-interop re-subscribes to this local Appearance
+    try {
+      const { INTERNAL_RESET } = require('react-native-css-interop/dist/shared');
+      const { colorScheme } = require('nativewind');
+      // Trigger reattachment of listeners to the overridden Appearance instance
+      colorScheme?.[INTERNAL_RESET]?.(Appearance);
+    } catch {}
 
     return () => {
       // Restore originals on unmount
