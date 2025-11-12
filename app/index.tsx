@@ -11,7 +11,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Link, Stack } from 'expo-router';
 import { MoonStarIcon, StarIcon, SunIcon } from 'lucide-react-native';
-import { useColorScheme } from 'nativewind';
 import { useMicroTheme } from '@/providers/micro-theme';
 import * as React from 'react';
 import { Image, type ImageStyle, View } from 'react-native';
@@ -33,16 +32,15 @@ const IMAGE_STYLE: ImageStyle = {
 };
 
 export default function Screen() {
-  const { scheme } = useMicroTheme();
+  const { scheme, variableStyle } = useMicroTheme();
   const [isOn, setIsOn] = React.useState(false);
   const [isChecked, setIsChecked] = React.useState(false);
   const [progress, setProgress] = React.useState(42);
-  const [tab, setTab] = React.useState('account');
 
   return (
     <>
       <Stack.Screen options={SCREEN_OPTIONS} />
-      <View className="flex-1 items-center justify-center gap-8 p-4 bg-background">
+      <View className="flex-1 items-center justify-center gap-8 p-4 bg-background" style={variableStyle}>
         <Image source={LOGO[scheme ?? 'light']} style={IMAGE_STYLE} resizeMode="contain" />
         <View className="gap-2 p-4">
           <Text className="ios:text-foreground font-mono text-sm text-muted-foreground">

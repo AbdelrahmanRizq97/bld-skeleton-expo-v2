@@ -96,3 +96,83 @@ Use this structure when adding or modifying code. Keep modules small, composable
   - `components/ui/empty-state.tsx`: icon + title + description + action slot.
   - `components/ui/banner.tsx`: dismissible banner with `variant` and optional `icon`.
   - `components/ui/form-field.tsx`: layout shell for label, hint, and error (no validation logic).
+
+## Theme isolation for micro apps
+
+Micro apps are rendered inside a super app. The super app controls its own theme (NativeWind global color scheme and navigation theme). Micro apps MUST NOT read or mutate the host’s global theme. Theme changes inside a micro app must be isolated to the micro app subtree.
+
+Note: NativeWind does not export a `Theme` provider. Use the provided `MicroThemeProvider` and runtime variable overrides instead.
+
+### Rules (must follow)
+
+- Do NOT call `toggleColorScheme()` or `setColorScheme()` from `nativewind` inside the micro app. These mutate the global scheme and will flip the host theme.
+- Do NOT rely on `dark:` utility variants for dynamic theming in the micro app. `dark:` uses the global scheme; it will not follow the micro app’s local toggle.
+- DO use token-based classes (`bg-background`, `text-foreground`, `border-border`, etc.) everywhere. These resolve to CSS variables that we override locally per micro app.
+- DO wrap the micro app root with `MicroThemeProvider` and keep it in place.
+  - File: `providers/micro-theme.tsx`
+  - It sets subtree-scoped CSS variables via `vars()` from `nativewind`, without touching the global scheme.
+  - It exposes `useMicroTheme()` with `scheme`, `setScheme`, `toggle`, and `variableStyle` for local toggles and variable application.
+- Keep `:root` and `.dark:root` tokens in `global.css`. They act as defaults; the provider overrides variables inside the micro subtree at runtime.
+- Do NOT modify `host-root.tsx` other than to keep the existing wrapper usage. It’s managed and required for routing.
+
+### How to implement theming in micro apps
+
+- Wrap the app subtree (already done) with `MicroThemeProvider` to scope tokens.
+- Apply `variableStyle` from `useMicroTheme()` to the top-level screen container together with `bg-background` so tokens resolve with the current local scheme:
+
+```tsx
+import { useMicroTheme } from '@/providers/micro-theme';
+
+export default function Screen() {
+  const { variableStyle } = useMicroTheme();
+  return (
+    <View className="bg-background flex-1" style={variableStyle}>
+      {/* ... */}
+    </View>
+  );
+}
+```
+
+- For containers that should reflect the background, add `bg-background` (and `text-foreground` if appropriate). Views default to transparent, so explicitly set background where needed (screen roots, cards, etc.).
+- Avoid hard-coded colors. Always use design tokens mapped in:
+  - `global.css` (CSS variables),
+  - `tailwind.config.js` (color maps like `background: 'hsl(var(--background))'`),
+  - `lib/theme.ts` (JS theme object if needed for non-NativeWind consumers).
+
+### Local toggle usage
+
+- Use `useMicroTheme()` to drive the toggle button inside the micro app:
+  - Call `toggle()` to flip between `light` and `dark`.
+  - Use `scheme` to conditionally render icons or assets.
+- Do NOT call `useColorScheme()` from `nativewind` to mutate global state. You may read it once for initial default only (the provider already handles this).
+
+### When components don’t update on toggle
+
+- If a component doesn’t react to the micro toggle, it likely:
+  - Uses `dark:` utilities (global scheme) instead of token classes. Replace with token classes (e.g., `bg-background`, `text-muted-foreground`).
+  - Lacks an explicit background; add `bg-background` on the container or screen root, and ensure `style={variableStyle}` is applied at the screen root.
+  - Uses inline styles or hard-coded colors; replace with token classes or map to tokens.
+
+### Changing colors (where to edit)
+
+- Global defaults
+  - Edit CSS variables in `global.css` under `:root` (light) and `.dark:root` (dark).
+  - These are the fallback values when no micro override is present.
+
+- Micro app-scoped overrides (local)
+  - Edit `LIGHT_VARS` and `DARK_VARS` in `providers/micro-theme.tsx`.
+  - These override the same variables at runtime for the micro subtree via `vars()`.
+  - Keep these values in sync with `global.css` 
+
+- Tailwind color mapping (already wired)
+  - `tailwind.config.js` maps Tailwind tokens to CSS variables, e.g. `background: 'hsl(var(--background))'`.
+  - No change is required when you only tweak colors; add mappings only if you introduce new tokens.
+
+- JS consumers (non-NativeWind)
+  - Update `lib/theme.ts` in `THEME.light` and `THEME.dark` so non-NativeWind consumers (e.g., navigation, charts) get the same colors.
+  - Keep these in sync with `global.css` and the micro provider vars.
+
+- Precedence and usage
+  - Micro vars from `MicroThemeProvider` take precedence within the micro app subtree.
+  - `:root` / `.dark:root` are global defaults outside the micro subtree (host).
+  - Components should always use token classes (`bg-background`, `text-foreground`, etc.), not hard-coded colors unless necessary.

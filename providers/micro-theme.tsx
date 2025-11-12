@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View } from 'react-native';
+import { View, type ViewStyle } from 'react-native';
 import { useColorScheme as useNWColorScheme, vars } from 'nativewind';
 
 type Scheme = 'light' | 'dark';
@@ -8,6 +8,7 @@ type MicroThemeContextValue = {
   scheme: Scheme;
   setScheme: (s: Scheme) => void;
   toggle: () => void;
+  variableStyle: ViewStyle;
 };
 
 const MicroThemeContext = React.createContext<MicroThemeContextValue | undefined>(undefined);
@@ -34,6 +35,7 @@ export function MicroThemeProvider({ children }: ProviderProps) {
       scheme,
       setScheme,
       toggle: () => setScheme((s) => (s === 'dark' ? 'light' : 'dark')),
+      variableStyle: vars(scheme === 'dark' ? DARK_VARS : LIGHT_VARS) as ViewStyle,
     }),
     [scheme],
   );
@@ -93,12 +95,11 @@ export function MicroThemeProvider({ children }: ProviderProps) {
     '--chart-5': '340 75% 55%',
   } as const;
 
-  const variableStyle = vars(scheme === 'dark' ? DARK_VARS : LIGHT_VARS);
   const wrapperClass = scheme === 'dark' ? 'micro-dark' : 'micro-light';
 
   return (
     <MicroThemeContext.Provider value={value}>
-      <View className={wrapperClass + ' bg-background text-foreground'} style={[{ flex: 1 }, variableStyle]}>
+      <View className={wrapperClass + ' bg-background text-foreground'} style={{ flex: 1 }}>
         {children}
       </View>
     </MicroThemeContext.Provider>
