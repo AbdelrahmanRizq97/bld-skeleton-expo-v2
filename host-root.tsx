@@ -14,5 +14,10 @@ import { ExpoRoot } from 'expo-router';
 
 export default function Root() {
   const ctx = require.context('./app', true, /.*/);
-  return <ExpoRoot context={ctx} />;
+  const { MicroThemeProvider } = require('./providers/micro-theme') as typeof import('./providers/micro-theme');
+  return (
+    <MicroThemeProvider>
+      <ExpoRoot context={ctx} />
+    </MicroThemeProvider>
+  );
 }
