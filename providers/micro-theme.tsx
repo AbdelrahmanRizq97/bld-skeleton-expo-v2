@@ -98,7 +98,7 @@ export function MicroThemeProvider({ children }: ProviderProps) {
 
   return (
     <MicroThemeContext.Provider value={value}>
-      <View className={wrapperClass} style={[{ flex: 1 }, variableStyle]}>
+      <View className={wrapperClass + ' bg-background text-foreground'} style={[{ flex: 1 }, variableStyle]}>
         {children}
       </View>
     </MicroThemeContext.Provider>
