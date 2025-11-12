@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Link, Stack } from 'expo-router';
 import { MoonStarIcon, StarIcon, SunIcon } from 'lucide-react-native';
-import { useColorScheme, colorScheme as nativewindColorScheme } from 'nativewind';
+import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { Image, type ImageStyle, View } from 'react-native';
 
@@ -32,7 +32,7 @@ const IMAGE_STYLE: ImageStyle = {
 };
 
 export default function Screen() {
-  const { colorScheme: scheme } = useColorScheme();
+  const { colorScheme } = useColorScheme();
   const [isOn, setIsOn] = React.useState(false);
   const [isChecked, setIsChecked] = React.useState(false);
   const [progress, setProgress] = React.useState(42);
@@ -42,8 +42,7 @@ export default function Screen() {
     <>
       <Stack.Screen options={SCREEN_OPTIONS} />
       <View className="flex-1 items-center justify-center gap-8 p-4">
-        <Image source={LOGO.light} style={IMAGE_STYLE} className="dark:hidden" resizeMode="contain" />
-        <Image source={LOGO.dark} style={IMAGE_STYLE} className="hidden dark:flex" resizeMode="contain" />
+        <Image source={LOGO[colorScheme ?? 'light']} style={IMAGE_STYLE} resizeMode="contain" />
         <View className="gap-2 p-4">
           <Text className="ios:text-foreground font-mono text-sm text-muted-foreground">
             1. Edit <Text variant="code">app/index.tsx</Text> to get started.
@@ -143,19 +142,15 @@ const THEME_ICONS = {
 };
 
 function ThemeToggle() {
-  const { colorScheme: scheme } = useColorScheme();
+  const { colorScheme, toggleColorScheme } = useColorScheme();
 
   return (
     <Button
-      onPress={() => {
-        const next = (scheme ?? 'light') === 'dark' ? 'light' : 'dark';
-        nativewindColorScheme.set(next as 'light' | 'dark' | 'system');
-      }}
+      onPressIn={toggleColorScheme}
       size="icon"
       variant="ghost"
       className="ios:size-9 rounded-full web:mx-4">
-      <Icon as={SunIcon} className="size-5 dark:hidden" />
-      <Icon as={MoonStarIcon} className="hidden size-5 dark:flex" />
+      <Icon as={THEME_ICONS[colorScheme ?? 'light']} className="size-5" />
     </Button>
   );
 }
