@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Link, Stack } from 'expo-router';
 import { MoonStarIcon, StarIcon, SunIcon } from 'lucide-react-native';
-import { useMicroTheme } from '@/providers/micro-theme';
+import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { Image, type ImageStyle, View } from 'react-native';
 
@@ -32,7 +32,7 @@ const IMAGE_STYLE: ImageStyle = {
 };
 
 export default function Screen() {
-  const { scheme } = useMicroTheme();
+  const { colorScheme } = useColorScheme();
   const [isOn, setIsOn] = React.useState(false);
   const [isChecked, setIsChecked] = React.useState(false);
   const [progress, setProgress] = React.useState(42);
@@ -40,8 +40,8 @@ export default function Screen() {
   return (
     <>
       <Stack.Screen options={SCREEN_OPTIONS} />
-      <View className="flex-1 items-center justify-center gap-8 p-4 bg-background">
-        <Image source={LOGO[scheme ?? 'light']} style={IMAGE_STYLE} resizeMode="contain" />
+      <View className="flex-1 items-center justify-center gap-8 p-4">
+        <Image source={LOGO[colorScheme ?? 'light']} style={IMAGE_STYLE} resizeMode="contain" />
         <View className="gap-2 p-4">
           <Text className="ios:text-foreground font-mono text-sm text-muted-foreground">
             1. Edit <Text variant="code">app/index.tsx</Text> to get started.
@@ -141,15 +141,15 @@ const THEME_ICONS = {
 };
 
 function ThemeToggle() {
-  const { scheme, toggle } = useMicroTheme();
+  const { colorScheme, toggleColorScheme } = useColorScheme();
 
   return (
     <Button
-      onPressIn={toggle}
+      onPressIn={toggleColorScheme}
       size="icon"
       variant="ghost"
       className="ios:size-9 rounded-full web:mx-4">
-      <Icon as={THEME_ICONS[scheme ?? 'light']} className="size-5" />
+      <Icon as={THEME_ICONS[colorScheme ?? 'light']} className="size-5" />
     </Button>
   );
 }
