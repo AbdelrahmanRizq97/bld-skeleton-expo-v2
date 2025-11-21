@@ -21,8 +21,6 @@ if (typeof App !== 'function') {
   throw new Error('host-root must default-export a React component');
 }
 
-AppRegistry.registerComponent('MicroMain', () => {
-  console.log('Micro: Returning App from registerComponent');
-  return App;
-});
+AppRegistry.registerComponent('main', () => App);
+AppRegistry.registerComponent('MicroMain', () => App);
 console.log('Micro: host-entry.tsx registered');
