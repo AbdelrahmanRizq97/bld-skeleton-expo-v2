@@ -1,3 +1,29 @@
+## 🚨 CRITICAL: Replace Root Index File
+
+- **ALWAYS replace `app/index.tsx`** with a redirect to your actual app when building a new feature. The skeleton provides a component showcase template at `app/index.tsx` that will be the landing page. Use `<Redirect href="/(tabs)" />` or similar to point users to your real app.
+- **🚨 NEVER use `as any` type casts with Redirect** - This can cause "This screen doesn't exist" errors and routing failures.
+- **Redirect to route groups, not index files** - Use `/(tabs)` instead of `/(tabs)/index`. Expo Router automatically loads the index file.
+- **Example**: `export default function RootIndex() { return <Redirect href="/(tabs)" />; }`
+
+```tsx
+// ✅ CORRECT - Clean redirect to route group
+import { Redirect } from 'expo-router';
+
+export default function RootIndex() {
+  return <Redirect href="/(tabs)" />;
+}
+
+// ❌ WRONG - Using 'as any' type cast
+export default function RootIndex() {
+  return <Redirect href="/(tabs)/index" as any />; // Causes routing errors!
+}
+
+// ❌ WRONG - Redundant path to index file
+export default function RootIndex() {
+  return <Redirect href="/(tabs)/index" />; // Just use "/(tabs)" instead
+}
+```
+
 ## Folder structure and responsibilities
 
 Use this structure when adding or modifying code. Keep modules small, composable, and placed by responsibility. Import with the `@` alias from the repo root (e.g., `@/components/ui/button`).
@@ -16,18 +42,22 @@ Use this structure when adding or modifying code. Keep modules small, composable
 - **Example**:
 
 ```tsx
-// ✅ CORRECT - Root layout with headers disabled
+// ✅ CORRECT - Root layout with headers disabled and GestureHandlerRootView
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-          }}
-        />
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+            }}
+          />
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -43,6 +73,8 @@ export default function RootLayout() {
 }
 ```
 
+**Note:** The `GestureHandlerRootView` wrapper is required if you use bottom sheets, swipeable components, or any gesture-based UI. Always include it as the outermost wrapper.
+
 - **When to show headers**: Only enable headers when you explicitly want them and have configured proper titles for each screen in that Stack's options.
 - **Tab layouts**: Tab navigators should also have `headerShown: false` in their screenOptions, and individual screens can use `<Stack.Screen options={{ headerShown: false }} />` if needed.
 - **CRITICAL: Explicit headerShown for consistent positioning** - Always explicitly set `headerShown: true` in `Stack.Screen` options when using headers on individual screens. Omitting this can cause inconsistent header positioning on Android between different screens.
@@ -51,6 +83,8 @@ export default function RootLayout() {
 
 - **NEVER use `useEffect` + `router.replace()` for redirects** - This causes "Attempted to navigate before mounting the Root Layout component" errors.
 - **ALWAYS use `<Redirect>` component** for declarative redirects in screen components.
+- **🚨 NEVER use `as any` type casts with navigation** - This breaks type safety and can cause "This screen doesn't exist" errors.
+- **Route to groups, not index files** - Use `/(tabs)` instead of `/(tabs)/index`. Expo Router handles index resolution automatically.
 - **Example**:
 
 ```tsx
@@ -66,7 +100,19 @@ export default function Index() {
   return null;
 }
 
-// ✅ CORRECT - Use Redirect component
+// ❌ WRONG - Using 'as any' breaks routing
+import { Redirect } from 'expo-router';
+
+export default function Index() {
+  return <Redirect href="/(tabs)" as any />; // DO NOT DO THIS!
+}
+
+// ❌ WRONG - Redundant index path
+export default function Index() {
+  return <Redirect href="/(tabs)/index" />; // Just use "/(tabs)"
+}
+
+// ✅ CORRECT - Use Redirect component without type casts
 import { Redirect } from 'expo-router';
 
 export default function Index() {
@@ -78,6 +124,7 @@ export default function Index() {
   - Inside event handlers (button clicks, form submissions)
   - After async operations complete (API calls, auth checks)
   - Never in component body or useEffect on mount
+  - **NEVER use `as any` casts** - If TypeScript complains about a route, the route path is likely wrong, not the type system
 
 ### assets
 
@@ -117,6 +164,7 @@ export default function Index() {
 - **Put here**: Global state like auth, settings, feature flags.
 - **Conventions**: Export `Provider` and a typed `useXxxContext()` hook; keep side effects small and isolated.
 - **Avoid**: UI components or screen-specific state.
+- **🚨 CRITICAL: AsyncStorage import** - If persisting state with AsyncStorage, ALWAYS use default import: `import AsyncStorage from '@react-native-async-storage/async-storage'` (NOT `import * as AsyncStorage`). See "AsyncStorage Import" section for details.
 
 ### hooks
 
@@ -140,6 +188,28 @@ export default function Index() {
 - Keep `components/ui` APIs platform-agnostic.
 - Use `@/…` path alias for imports.
 - **CRITICAL: React imports** - Always use named imports from 'react' (e.g., `import { useState, useEffect } from 'react'`). Never use `React.useEffect()` unless you've imported `React` itself. If using a React API, import that specific API by name.
+
+### 🚨 CRITICAL: AsyncStorage Import
+
+- **ALWAYS use default import for AsyncStorage** - Using namespace import (`import * as`) will cause "AsyncStorage.getItem is not a function" errors.
+- **Correct import**: `import AsyncStorage from '@react-native-async-storage/async-storage';`
+
+```tsx
+// ✅ CORRECT - Default import
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Usage works correctly
+const value = await AsyncStorage.getItem('key');
+await AsyncStorage.setItem('key', 'value');
+
+// ❌ WRONG - Namespace import causes runtime errors
+import * as AsyncStorage from '@react-native-async-storage/async-storage';
+
+// This will fail with "AsyncStorage.getItem is not a function"
+const value = await AsyncStorage.getItem('key'); // TypeError!
+```
+
+**Why this happens**: The `@react-native-async-storage/async-storage` package exports a default object with methods, not a namespace. Using `import * as` wraps the module in an extra layer, making the methods inaccessible.
 
 ### 🚨 CRITICAL: Text and Icon Styling Inside Context-Providing Components
 
@@ -840,6 +910,22 @@ export default function TaskListScreen() {
 - **Use `runOnJS()`** to call JavaScript functions from animation callbacks.
 - **ALWAYS wrap app root with `GestureHandlerRootView`** in `_layout.tsx` - Required for bottom sheets, swipeable components, and any gesture-based UI. Without it, you'll get "GestureDetector must be used as a descendant of GestureHandlerRootView" errors. Must be outermost wrapper with `style={{ flex: 1 }}`.
 
+**Setup Instructions:**
+```tsx
+// In app/_layout.tsx (REQUIRED)
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+export default function RootLayout() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      {/* All your other providers and components */}
+    </GestureHandlerRootView>
+  );
+}
+```
+
+**See the BottomSheet section** for a complete _layout.tsx example with all providers configured correctly.
+
 ## Icons
 - Never use icons other than Lucide icons unless specified by the user.
 - Use `Icon` component from `components/ui/icon.tsx` for all icons.
@@ -1321,7 +1407,30 @@ interface Event {
 
 #### BottomSheet (@gorhom/bottom-sheet)
 Draggable bottom sheet with swipe-to-dismiss. Install: `npm install @gorhom/bottom-sheet`
-- **Requires**: `GestureHandlerRootView` wrapper in `_layout.tsx`
+
+- **🚨 CRITICAL: Required Setup - GestureHandlerRootView**
+  - **MUST wrap your entire app** with `GestureHandlerRootView` in `_layout.tsx` as the outermost wrapper
+  - **Without this, you'll get the error**: `"GestureDetector must be used as a descendant of GestureHandlerRootView"`
+  - **This wrapper is required** for ALL bottom sheets, swipeable components, and gesture-based UI to work
+  - **Must be outermost wrapper** with `style={{ flex: 1 }}`
+  
+**Required _layout.tsx Setup:**
+```tsx
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+// ... other imports
+
+export default function RootLayout() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        {/* Rest of your providers and Stack */}
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+}
+```
+
 - **🚨 CRITICAL: Use theme background colors** - NEVER hardcode background colors. Always use the exact background color from `@/lib/theme` to match the app's background seamlessly.
 - **Basic Usage**:
 ```tsx
@@ -1712,3 +1821,20 @@ On/off button or grouped toggle buttons.
 - All components support the `className` prop for custom styling
 - Use composition: nest `Text` and `Icon` inside interactive components
 - Check component-specific props by reading the source files in `components/ui/`
+
+## Common Import Patterns
+
+| Package | Import Type | Correct Pattern |
+|---------|-------------|-----------------|
+| `@react-native-async-storage/async-storage` | Default | `import AsyncStorage from '...'` (NOT `import * as`) |
+| `@gorhom/bottom-sheet` | Default + Named | `import BottomSheet, { BottomSheetView } from '...'` |
+| `react-native-gesture-handler` | Named | `import { GestureHandlerRootView } from '...'` (wrap app root in _layout.tsx) |
+| `react-native-safe-area-context` | Named | `import { SafeAreaView } from '...'` (NOT from `react-native`) |
+| `expo-router` | Named | `import { Stack, useRouter } from '...'` (NO `as any` casts) |
+| `lucide-react-native` | Named | Use `color` prop, not `className` for colors |
+
+**Key rule**: If you get runtime "not a function" errors, check your import syntax (default vs named vs namespace).
+
+**Critical Setup Requirements:**
+- **GestureHandlerRootView**: MUST wrap entire app in `_layout.tsx` for bottom sheets and gestures to work. Without it: `"GestureDetector must be used as a descendant of GestureHandlerRootView"` error.
+- **SafeAreaProvider**: Required at app root for safe area support. Without it: insets will be 0 and content hidden under notches.
