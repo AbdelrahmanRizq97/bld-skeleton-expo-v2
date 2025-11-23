@@ -1,16 +1,25 @@
 ## 🚨 CRITICAL: Replace Root Index File
 
-- **ALWAYS replace `app/index.tsx`** with a redirect to your actual app when building a new feature. The skeleton provides a component showcase template at `app/index.tsx` that will be the landing page. Use `<Redirect href="/(tabs)" />` or similar to point users to your real app.
+- **ALWAYS replace `app/index.tsx`** with a redirect to your actual app when building a new feature. The skeleton provides a component showcase template at `app/index.tsx` that will be the landing page.
 - **🚨 NEVER use `as any` type casts with Redirect** - This can cause "This screen doesn't exist" errors and routing failures.
-- **Redirect to route groups, not index files** - Use `/(tabs)` instead of `/(tabs)/index`. Expo Router automatically loads the index file.
-- **Example**: `export default function RootIndex() { return <Redirect href="/(tabs)" />; }`
+- **Redirect strategy depends on whether your route group has an index file**:
+  - **IF the route group HAS an `index.tsx`**: Use `<Redirect href="/(tabs)" />` - Expo Router automatically loads it
+  - **IF the route group has NO `index.tsx`**: Use `<Redirect href="/(tabs)/screen-name" />` - Specify which screen to load
+  - Check your file structure to determine which pattern applies to your app
 
 ```tsx
-// ✅ CORRECT - Clean redirect to route group
+// ✅ CORRECT - Route group WITH index.tsx file inside
 import { Redirect } from 'expo-router';
 
 export default function RootIndex() {
   return <Redirect href="/(tabs)" />;
+}
+
+// ✅ CORRECT - Route group WITHOUT index.tsx file (must specify screen)
+import { Redirect } from 'expo-router';
+
+export default function RootIndex() {
+  return <Redirect href="/(tabs)/overview" />;
 }
 
 // ❌ WRONG - Using 'as any' type cast
@@ -18,7 +27,12 @@ export default function RootIndex() {
   return <Redirect href="/(tabs)/index" as any />; // Causes routing errors!
 }
 
-// ❌ WRONG - Redundant path to index file
+// ❌ WRONG - Redirecting to group that has no index.tsx
+export default function RootIndex() {
+  return <Redirect href="/(tabs)" />; // "This screen doesn't exist" if no index.tsx!
+}
+
+// ❌ WRONG - Redundant path when index file exists
 export default function RootIndex() {
   return <Redirect href="/(tabs)/index" />; // Just use "/(tabs)" instead
 }
@@ -649,6 +663,8 @@ export default function Screen() {
 |-------------|-------------------|-----------|--------------|
 | Text button | 8px | N/A | N/A |
 | Icon button | 4px | 25 | 2.5 |
+
+**Note for Tab Screens:** Header buttons inside tab navigator screens (non-root headers) should use `paddingHorizontal: 16` instead of `4px`. Tab screen headers don't have the native iOS liquid glass effect, so they need more spacing for proper visual balance.
 
 #### Icon Button Example
 
