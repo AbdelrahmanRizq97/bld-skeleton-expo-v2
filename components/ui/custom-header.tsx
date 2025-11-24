@@ -13,8 +13,14 @@ import Animated, {
   withTiming,
   Extrapolate,
 } from 'react-native-reanimated';
+import { useColorScheme } from 'nativewind';
 import { cn } from '@/lib/utils';
 import { Text } from '@/components/ui/text';
+
+const GRADIENT_COLORS = {
+  light: ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0)'] as [string, string],
+  dark: ['rgba(10, 10, 10, 1)', 'rgba(10, 10, 10, 0)'] as [string, string],
+};
 
 export interface HeaderButton {
   icon: LucideIcon;
@@ -68,16 +74,14 @@ export function CustomHeader({
 }: CustomHeaderProps) {
   const router = useRouter();
   const theme = useTheme();
+  const { colorScheme } = useColorScheme();
   const insets = useSafeAreaInsets();
   const scrollY = useSharedValue(0);
   const lastScrollY = useSharedValue(0);
   const headerVisible = useSharedValue(1);
 
-  // Default gradient colors based on theme
-  const defaultGradientColors: [string, string] = [
-    theme.colors.background,
-    'transparent'
-  ];
+  // Default gradient colors based on color scheme (LinearGradient requires rgba/hex, not HSL)
+  const defaultGradientColors = GRADIENT_COLORS[colorScheme ?? 'light'];
   const finalGradientColors = gradientColors || defaultGradientColors;
 
   // Scroll handler
