@@ -2,39 +2,34 @@
 
 - **ALWAYS replace `app/index.tsx`** with a redirect to your actual app when building a new feature. The skeleton provides a component showcase template at `app/index.tsx` that will be the landing page.
 - **🚨 NEVER use `as any` type casts with Redirect** - This can cause "This screen doesn't exist" errors and routing failures.
-- **Redirect strategy depends on whether your route group has an index file**:
-  - **IF the route group HAS an `index.tsx`**: Use `<Redirect href="/(tabs)" />` - Expo Router automatically loads it
-  - **IF the route group has NO `index.tsx`**: Use `<Redirect href="/(tabs)/screen-name" />` - Specify which screen to load
-  - Check your file structure to determine which pattern applies to your app
+- **Redirect strategy**: Always redirect to a specific screen, never to a route group alone.
+  - **IF using tabs**: Use `<Redirect href="/(tabs)/screen-name" />` where `screen-name` is your default tab (e.g., `playdates`, `overview`, `home`)
+  - **IF NOT using tabs**: Use `<Redirect href="/screen-name" />` to your main screen
+  - **🚨 DO NOT create `index.tsx` inside `(tabs)`** - All tabs should have semantic names (e.g., `playdates.tsx`, `contacts.tsx`) for clarity
 
 ```tsx
-// ✅ CORRECT - Route group WITH index.tsx file inside
+// ✅ CORRECT - Tab-based app with named tabs
 import { Redirect } from 'expo-router';
 
 export default function RootIndex() {
-  return <Redirect href="/(tabs)" />;
+  return <Redirect href="/(tabs)/playdates" />;
 }
 
-// ✅ CORRECT - Route group WITHOUT index.tsx file (must specify screen)
+// ✅ CORRECT - Non-tab app
 import { Redirect } from 'expo-router';
 
 export default function RootIndex() {
-  return <Redirect href="/(tabs)/overview" />;
+  return <Redirect href="/home" />;
 }
 
 // ❌ WRONG - Using 'as any' type cast
 export default function RootIndex() {
-  return <Redirect href="/(tabs)/index" as any />; // Causes routing errors!
+  return <Redirect href="/(tabs)/playdates" as any />; // Causes routing errors!
 }
 
-// ❌ WRONG - Redirecting to group that has no index.tsx
+// ❌ WRONG - Redirecting to group without specific screen
 export default function RootIndex() {
-  return <Redirect href="/(tabs)" />; // "This screen doesn't exist" if no index.tsx!
-}
-
-// ❌ WRONG - Redundant path when index file exists
-export default function RootIndex() {
-  return <Redirect href="/(tabs)/index" />; // Just use "/(tabs)" instead
+  return <Redirect href="/(tabs)" />; // "This screen doesn't exist" error!
 }
 ```
 
@@ -98,7 +93,7 @@ export default function RootLayout() {
 - **NEVER use `useEffect` + `router.replace()` for redirects** - This causes "Attempted to navigate before mounting the Root Layout component" errors.
 - **ALWAYS use `<Redirect>` component** for declarative redirects in screen components.
 - **🚨 NEVER use `as any` type casts with navigation** - This breaks type safety and can cause "This screen doesn't exist" errors.
-- **Route to groups, not index files** - Use `/(tabs)` instead of `/(tabs)/index`. Expo Router handles index resolution automatically.
+- **Always redirect to specific screens, not route groups** - Use `/(tabs)/screen-name` to specify which tab to load.
 - **Example**:
 
 ```tsx
@@ -109,7 +104,7 @@ import { useRouter } from 'expo-router';
 export default function Index() {
   const router = useRouter();
   useEffect(() => {
-    router.replace('/(tabs)');
+    router.replace('/(tabs)/playdates');
   }, []);
   return null;
 }
@@ -118,19 +113,19 @@ export default function Index() {
 import { Redirect } from 'expo-router';
 
 export default function Index() {
-  return <Redirect href="/(tabs)" as any />; // DO NOT DO THIS!
+  return <Redirect href="/(tabs)/playdates" as any />; // DO NOT DO THIS!
 }
 
-// ❌ WRONG - Redundant index path
+// ❌ WRONG - Redirecting to group without specific screen
 export default function Index() {
-  return <Redirect href="/(tabs)/index" />; // Just use "/(tabs)"
+  return <Redirect href="/(tabs)" />; // "This screen doesn't exist" error!
 }
 
-// ✅ CORRECT - Use Redirect component without type casts
+// ✅ CORRECT - Use Redirect component with specific screen
 import { Redirect } from 'expo-router';
 
 export default function Index() {
-  return <Redirect href="/(tabs)" />;
+  return <Redirect href="/(tabs)/playdates" />;
 }
 ```
 
@@ -139,6 +134,121 @@ export default function Index() {
   - After async operations complete (API calls, auth checks)
   - Never in component body or useEffect on mount
   - **NEVER use `as any` casts** - If TypeScript complains about a route, the route path is likely wrong, not the type system
+
+#### 🚨 CRITICAL: Proper File Structure for Tab Navigation (important only if you are using tabs)
+
+**Problem**: In Expo Router, **ALL files inside a `(tabs)` folder automatically become tabs** in the tab bar, AND they become children of the Tabs navigator, which means they lose native Stack navigation features.
+
+**Common Symptoms**: 
+1. You see many unwanted tabs at the bottom navigation (like `create-contact`, `edit-playdate/[id]`, etc.) when you only wanted 3-4 main tabs
+2. Detail/edit/create screens don't have native iOS swipe-back gestures
+3. Headers don't have the native iOS liquid glass blur effect
+4. Navigation doesn't feel native
+
+**Why This Happens**: Expo Router treats every route file in a tabs directory as a child of the Tabs navigator. Tabs navigators don't support native Stack navigation features like swipe-back gestures or proper iOS headers.
+
+**✅ CORRECT Solution: Keep Detail/Edit/Create Screens at App Root Level**
+
+Place ONLY your main tab screens inside `app/(tabs)/`, and keep all other screens at the app root level (`app/`) so they're part of the Stack navigator:
+
+**Directory Structure:**
+```
+app/
+├── _layout.tsx                    # Root Stack navigator
+├── index.tsx                      # Redirect to /(tabs)/playdates
+├── (tabs)/                        # 🟢 Tab navigator folder
+│   ├── _layout.tsx                # Tabs configuration
+│   ├── playdates.tsx              # Main tab: Playdates
+│   ├── contacts.tsx               # Main tab: Contacts
+│   └── settings.tsx               # Main tab: Settings
+├── create-contact.tsx             # 🟢 Stack screen (not a tab!)
+├── create-playdate.tsx            # 🟢 Stack screen (not a tab!)
+├── contact/
+│   └── [id].tsx                   # 🟢 Stack screen (not a tab!)
+├── playdate/
+│   └── [id].tsx                   # 🟢 Stack screen (not a tab!)
+├── edit-contact/
+│   └── [id].tsx                   # 🟢 Stack screen (not a tab!)
+└── edit-playdate/
+    └── [id].tsx                   # 🟢 Stack screen (not a tab!)
+```
+
+**Tabs Layout (Clean and Simple):**
+```tsx
+// app/(tabs)/_layout.tsx
+import { Tabs } from 'expo-router';
+import { Calendar, Users, Settings } from 'lucide-react-native';
+
+export default function TabsLayout() {
+  return (
+    <Tabs screenOptions={{ headerShown: false }}>
+      <Tabs.Screen
+        name="playdates"
+        options={{
+          title: 'Playdates',
+          tabBarIcon: ({ color, size }) => <Calendar size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="contacts"
+        options={{
+          title: 'Contacts',
+          tabBarIcon: ({ color, size }) => <Users size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
+        }}
+      />
+    </Tabs>
+  );
+}
+```
+
+**Navigation Paths:**
+```tsx
+// From a tab screen, navigate to Stack screens using root paths
+router.push('/create-contact');           // Not /(tabs)/create-contact
+router.push('/contact/123');              // Not /(tabs)/contact/123
+router.push('/edit-playdate/456');        // Not /(tabs)/edit-playdate/456
+```
+
+**Why This Approach is Better:**
+- ✅ Native iOS swipe-back gesture works on detail/edit/create screens
+- ✅ Proper iOS header with liquid glass blur effect
+- ✅ Native Android back button behavior
+- ✅ Clean tabs layout with no `href: null` hacks
+- ✅ Follows iOS and Android navigation patterns
+- ✅ Better performance (screens only rendered when needed)
+
+**File Organization Rules:**
+- **Inside `app/(tabs)/`**: ONLY the 3-5 main screens that should appear as tabs
+- **At `app/` root**: Detail screens, edit screens, create screens, authentication screens, onboarding, etc.
+- **Never**: Put detail/edit/create screens inside the `(tabs)` folder
+
+```tsx
+// ❌ WRONG - Putting everything inside (tabs) folder
+app/(tabs)/
+  ├── playdates.tsx
+  ├── contacts.tsx
+  ├── settings.tsx
+  ├── create-contact.tsx          // ❌ Should be at app root!
+  ├── contact/[id].tsx            // ❌ Should be at app root!
+  └── edit-contact/[id].tsx       // ❌ Should be at app root!
+
+// ✅ CORRECT - Only main tabs inside, others at root
+app/
+  ├── (tabs)/
+  │   ├── playdates.tsx           // ✅ Main tab
+  │   ├── contacts.tsx            // ✅ Main tab
+  │   └── settings.tsx            // ✅ Main tab
+  ├── create-contact.tsx          // ✅ Stack screen
+  ├── contact/[id].tsx            // ✅ Stack screen
+  └── edit-contact/[id].tsx       // ✅ Stack screen
+```
 
 ### assets
 
@@ -1086,8 +1196,9 @@ Lucide icon wrapper. Pass icon component via `as` prop.
 ### Layout & Containers
 
 #### Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter
-Composable card layout with structured sections.
-- **Usage**:
+Composable card layout with structured sections and multiple style variants.
+- **Variants**: `default`, `outline`, `elevated`, `gradient`
+- **Basic Usage**:
 ```tsx
 <Card>
   <CardHeader>
@@ -1098,28 +1209,57 @@ Composable card layout with structured sections.
   <CardFooter>{/* actions */}</CardFooter>
 </Card>
 ```
-- **🚨 CRITICAL: Do NOT add padding to CardContent** - Card already has built-in `py-6` (24px top/bottom padding). CardContent, CardHeader, and CardFooter only add horizontal padding (`px-6`). Never add `p-4`, `py-4`, `py-12`, or any other padding classes to CardContent - this creates excessive double padding. The Card's built-in vertical padding is sufficient.
+- **Variant Usage**:
+```tsx
+// Default card (standard with border)
+<Card variant="default">
+  <CardContent><Text>Standard card</Text></CardContent>
+</Card>
+
+// Outline card (transparent with border)
+<Card variant="outline">
+  <CardContent><Text>Outlined card</Text></CardContent>
+</Card>
+
+// Elevated card (no border, shadow only)
+<Card variant="elevated">
+  <CardContent><Text>Floating card</Text></CardContent>
+</Card>
+
+// Gradient card (colorful backgrounds)
+<Card variant="gradient" gradientColors={['#8B5CF6', '#EC4899']}>
+  <CardContent>
+    <Text className="text-white">Purple to pink gradient!</Text>
+  </CardContent>
+</Card>
+```
+- **Gradient Props**:
+  - `gradientColors`: `[string, string]` - Required array of two hex colors for gradient
+  - `gradientStart`: `{ x: number; y: number }` - Gradient start point (default: `{x:0, y:0}`)
+  - `gradientEnd`: `{ x: number; y: number }` - Gradient end point (default: `{x:1, y:1}`)
+- **🚨 CRITICAL: Gradient card text color** - When using `variant="gradient"`, all text inside automatically becomes white for proper contrast. For custom text colors, add `className="text-white"` or other color classes to override.
+- **🚨 CRITICAL: CardContent has built-in padding** - CardContent now has `px-4 py-4` (16px all around) built into the component. You should NOT add additional padding classes unless you need more spacing. The padding is already applied automatically.
 - **🚨 CRITICAL: Maximum 2 cards horizontally** - Mobile screens are too narrow for 3+ cards side-by-side. Never place more than 2 cards in a horizontal row. For 3+ items, use a vertical stack or a 2-column grid layout.
 - **Examples**:
 ```tsx
-// ✅ CORRECT - No padding on CardContent
+// ✅ CORRECT - CardContent has automatic padding
 <Card>
   <CardContent>
-    <Text>Content with proper spacing</Text>
+    <Text>Content with built-in padding (16px all around)</Text>
   </CardContent>
 </Card>
 
-// ❌ WRONG - Adding padding creates double padding (24px + 16px = 40px!)
+// ✅ CORRECT - Override padding if needed
 <Card>
-  <CardContent className="p-4">
-    <Text>Too much spacing!</Text>
+  <CardContent className="p-8">
+    <Text>Custom larger padding</Text>
   </CardContent>
 </Card>
 
-// ❌ WRONG - py-12 creates even more excessive padding (24px + 48px = 72px!)
-<Card>
-  <CardContent className="py-12">
-    <Text>Way too much spacing!</Text>
+// ✅ CORRECT - Gradient card with automatic white text
+<Card variant="gradient" gradientColors={['#3B82F6', '#06B6D4']}>
+  <CardContent>
+    <Text className="text-white">Blue gradient card</Text>
   </CardContent>
 </Card>
 
@@ -1788,6 +1928,192 @@ Tab-based content switcher.
   </TabsList>
   <TabsContent value="tab1">{/* content */}</TabsContent>
 </Tabs>
+```
+
+#### CustomHeader
+Animated, customizable header component with integrated scrollable content for screens that need per-page header customization.
+- **Import**: `import { CustomHeader } from '@/components/ui/custom-header';`
+- **🚨 CRITICAL: REQUIRED for tab screens**: You MUST use `CustomHeader` for screens inside tab navigators (like `(tabs)/_layout.tsx`). The root Stack header cannot be configured per-tab - it applies globally to all tabs. Even if tabs only differ in title and action buttons, you need `CustomHeader` to have different configurations per tab.
+- **When to use**: 
+  - **Tab layouts** - Each tab needs its own title, buttons, or collapse behavior (most common use case)
+  - **Grouped routes** - Any route group where different screens need different header configurations
+  - **Custom animations** - When you need scroll-based header animations not available in native headers
+- **When NOT to use**: For simple single-Stack apps WITHOUT tabs, prefer using the native Stack header configuration (`Stack.Screen options={{ headerShown: true }}`) as documented in the "Native iOS-Style Navigation Headers" section. The native header is more performant and provides platform-specific behavior out of the box.
+- **💡 Recommended: Use gradient backgrounds** - The `background="gradient"` option creates a modern, polished look with a smooth fade effect. This is the recommended default for most screens unless you have a specific design reason to use solid or transparent.
+- **Key Features**:
+  - Multiple size variants (small, medium, large)
+  - Alignment options (left, center)
+  - Background styles (solid, transparent, gradient with customizable colors)
+  - Collapse modes on scroll (none, shrink, hide, compact)
+  - Configurable buttons (back button, left button, right buttons with icon or iconCircle styles)
+  - Integrated animated scroll view with safe area handling
+  - Haptic feedback support
+- **🚨 CRITICAL: No Extra Wrapper Views**: CustomHeader has an integrated scroll view. Your content should go directly inside without extra wrapper Views. Adding unnecessary wrappers can cause JSX syntax errors with mismatched closing tags.
+- **Usage**:
+```tsx
+import { CustomHeader } from '@/components/ui/custom-header';
+import { Settings, Share2 } from 'lucide-react-native';
+
+export default function Screen() {
+  return (
+    <CustomHeader
+      title="My Screen"
+      size="large"
+      align="left"
+      background="gradient"
+      collapseMode="shrink"
+      showBackButton
+      rightButtons={[
+        {
+          icon: Settings,
+          onPress: () => router.push('/settings'),
+          style: 'icon',
+          accessibilityLabel: 'Settings',
+        },
+        {
+          icon: Share2,
+          onPress: handleShare,
+          style: 'iconCircle',
+          accessibilityLabel: 'Share',
+        },
+      ]}>
+      {/* Your scrollable content - goes directly inside */}
+      <View className="gap-6 py-6">
+        <Text>Content here</Text>
+      </View>
+    </CustomHeader>
+  );
+}
+
+// ❌ WRONG - Don't add extra wrapper Views
+export default function WrongScreen() {
+  return (
+    <CustomHeader title="My Screen">
+      <View>  {/* ❌ Unnecessary wrapper */}
+        <View className="gap-6 py-6">
+          <Text>Content</Text>
+        </View>
+      </View>  {/* ❌ Extra closing tag causes JSX errors */}
+    </CustomHeader>
+  );
+}
+
+// ✅ CORRECT - Content goes directly inside
+export default function CorrectScreen() {
+  return (
+    <CustomHeader title="My Screen">
+      <View className="gap-6 py-6">
+        <Text>Content</Text>
+      </View>
+    </CustomHeader>
+  );
+}
+```
+- **Props**:
+  - `title`: Header title text
+  - `size`: `'small' | 'medium' | 'large'` (default: `'large'`)
+  - `align`: `'left' | 'center'` (default: `'left'`)
+  - `background`: `'transparent' | 'solid' | 'gradient'` (default: `'solid'`)
+  - `collapseMode`: `'none' | 'shrink' | 'hide' | 'compact'` (default: `'none'`)
+  - `showBackButton`: Show chevron back button (default: `false`)
+  - `onBackPress`: Custom back button handler (defaults to `router.back()`)
+  - `leftButton`: Single left button configuration (HeaderButton object)
+  - `rightButtons`: Array of right button configurations (up to 4 buttons)
+  - `gradientColors`: Custom gradient colors as `[startColor, endColor]` (defaults to theme background to transparent)
+  - `className`: Additional header styles
+  - `contentClassName`: Additional content container styles
+- **HeaderButton Interface**:
+  - `icon`: Lucide icon component
+  - `onPress`: Button press handler
+  - `style`: `'icon' | 'iconCircle'` (plain icon or icon with circular background)
+  - `accessibilityLabel`: Accessibility label for screen readers
+- **Collapse Behaviors**:
+  - `none`: Header stays static
+  - `shrink`: Title font size shrinks on scroll (large size only)
+  - `hide`: Header slides up and fades out on scroll down, reappears on scroll up
+  - `compact`: Header padding reduces on scroll
+- **Platform Considerations**: Automatically handles safe area insets and uses `contentInsetAdjustmentBehavior` on iOS for proper content positioning.
+
+#### 🚨 CRITICAL: Centering Empty States in CustomHeader
+
+**Problem**: Empty state screens (like "No Items Yet") inside `CustomHeader` don't center vertically when using `flex-1` because the content is inside an integrated ScrollView.
+
+**Solution**: Calculate the proper height for the empty state container using screen dimensions and safe area insets. This ensures the empty state is perfectly centered on the screen.
+
+**Pattern to Use in ALL Apps**:
+
+```tsx
+import { View, Dimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CustomHeader } from '@/components/ui/custom-header';
+
+export default function Screen() {
+  const insets = useSafeAreaInsets();
+  const { items, isLoading } = useContext();
+
+  // Calculate height for centering empty state (screen height minus header and tab bar)
+  const screenHeight = Dimensions.get('window').height;
+  const emptyStateHeight = screenHeight - insets.top - insets.bottom - 200; // 200 accounts for header + tab bar
+
+  return (
+    <CustomHeader
+      title="My Items"
+      size="large"
+      background="gradient"
+      rightButtons={[/* ... */]}>
+      {isLoading ? (
+        <View style={{ height: emptyStateHeight }} className="justify-center items-center">
+          <Text className="text-muted-foreground">Loading...</Text>
+        </View>
+      ) : items.length === 0 ? (
+        <View style={{ height: emptyStateHeight }} className="justify-center items-center px-6">
+          <Icon size={48} color={theme.colors.primary} />
+          <Text className="text-lg font-semibold text-foreground text-center mb-2">
+            No Items Yet
+          </Text>
+          <Text className="text-sm text-muted-foreground text-center mb-6">
+            Create your first item to get started
+          </Text>
+          <Button onPress={() => router.push('/create')}>
+            <Text>Create Item</Text>
+          </Button>
+        </View>
+      ) : (
+        <FlatList
+          data={items}
+          renderItem={renderItem}
+          contentContainerStyle={{ padding: 16 }}
+          scrollEnabled={false}
+        />
+      )}
+    </CustomHeader>
+  );
+}
+```
+
+**Key Points**:
+- **ALWAYS use this pattern** for empty states in CustomHeader screens across all apps
+- Use `style={{ height: emptyStateHeight }}` instead of `className="flex-1"`
+- The magic number `200` accounts for typical header height (~100-120px) + tab bar height (~80-100px). Adjust if your app has different dimensions.
+- Apply the same height to both loading and empty states for consistency
+- This creates a polished, professional look with perfectly centered content
+
+**Why This Works**:
+- `Dimensions.get('window').height` gets the full viewport height
+- Subtracting safe area insets accounts for notches/status bars
+- Subtracting 200px accounts for header and tab bar space
+- The result is the exact height needed to center content in the visible area
+
+```tsx
+// ❌ WRONG - Using flex-1 doesn't work in CustomHeader's ScrollView
+<View className="flex-1 justify-center items-center">
+  <Text>Not centered!</Text>
+</View>
+
+// ✅ CORRECT - Using calculated height centers perfectly
+<View style={{ height: emptyStateHeight }} className="justify-center items-center">
+  <Text>Perfectly centered!</Text>
+</View>
 ```
 
 ### Display Components

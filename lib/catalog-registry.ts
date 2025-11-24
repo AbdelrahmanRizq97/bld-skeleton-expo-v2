@@ -12,6 +12,7 @@ export const COMPONENTS = [
   'Checkbox',
   'Collapsible',
   'ContextMenu',
+  'CustomHeader',
   'DatePicker',
   'Dialog',
   'DropdownMenu',

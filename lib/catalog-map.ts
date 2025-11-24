@@ -33,6 +33,8 @@ import { ToastDemo } from '@/components/catalog/toast-demo';
 import { ToggleDemo } from '@/components/catalog/toggle-demo';
 import { ToggleGroupDemo } from '@/components/catalog/togglegroup-demo';
 import { TooltipDemo } from '@/components/catalog/tooltip-demo';
+import CustomHeaderDemo from '@/components/catalog/customheader-demo';
+
 
 type DemoComponent = () => JSX.Element;
 
@@ -50,6 +52,7 @@ const CATALOG_MAP: Record<string, DemoComponent> = {
   Checkbox: CheckboxDemo,
   Collapsible: CollapsibleDemo,
   ContextMenu: ContextMenuDemo,
+  CustomHeader: CustomHeaderDemo,
   DatePicker: DatePickerDemo,
   Dialog: DialogDemo,
   DropdownMenu: DropdownMenuDemo,
