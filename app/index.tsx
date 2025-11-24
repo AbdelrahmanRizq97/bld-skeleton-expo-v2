@@ -1,5 +1,5 @@
 import { Text } from '@/components/ui/text';
-import { COMPONENTS } from '@/lib/component-registry';
+import { COMPONENTS } from '@/lib/catalog-registry';
 import { Link, Stack, type Href } from 'expo-router';
 import * as React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
