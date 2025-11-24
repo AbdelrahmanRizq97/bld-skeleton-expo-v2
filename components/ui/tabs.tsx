@@ -5,9 +5,17 @@ import { Platform } from 'react-native';
 
 function Tabs({
   className,
+  onValueChange,
   ...props
 }: TabsPrimitive.RootProps & React.RefAttributes<TabsPrimitive.RootRef>) {
-  return <TabsPrimitive.Root className={cn('flex flex-col gap-2', className)} {...props} />;
+  const safeOnValueChange = onValueChange ?? (() => {});
+  return (
+    <TabsPrimitive.Root
+      className={cn('flex flex-col gap-2', className)}
+      onValueChange={safeOnValueChange}
+      {...props}
+    />
+  );
 }
 
 function TabsList({

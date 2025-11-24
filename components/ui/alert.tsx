@@ -2,6 +2,7 @@ import { Icon } from '@/components/ui/icon';
 import { Text, TextClassContext } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react-native';
+import { AlertCircle } from 'lucide-react-native';
 import * as React from 'react';
 import { View, type ViewProps } from 'react-native';
 
@@ -14,10 +15,11 @@ function Alert({
   ...props
 }: ViewProps &
   React.RefAttributes<View> & {
-    icon: LucideIcon;
+    icon?: LucideIcon;
     variant?: 'default' | 'destructive';
     iconClassName?: string;
   }) {
+  const EffectiveIcon = icon ?? AlertCircle;
   return (
     <TextClassContext.Provider
       value={cn(
@@ -34,7 +36,7 @@ function Alert({
         {...props}>
         <View className="absolute left-3.5 top-3">
           <Icon
-            as={icon}
+            as={EffectiveIcon}
             className={cn('size-4', variant === 'destructive' && 'text-destructive', iconClassName)}
           />
         </View>

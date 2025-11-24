@@ -1,7 +1,7 @@
 import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
 import { CustomHeader } from '@/components/ui/custom-header';
-import { COMPONENTS } from '@/lib/component-registry';
+import { COMPONENTS } from '@/lib/catalog-registry';
 import { Link, Stack, type Href } from 'expo-router';
 import * as React from 'react';
 import { Pressable, View } from 'react-native';

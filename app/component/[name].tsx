@@ -3,8 +3,8 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getDemoComponent } from '@/lib/demo-mapper';
-import { COMPONENTS } from '@/lib/component-registry';
+import { getDemoComponent } from '@/lib/catalog-map';
+import { COMPONENTS } from '@/lib/catalog-registry';
 
 export default function ComponentDemo() {
   const { name } = useLocalSearchParams<{ name: string }>();
