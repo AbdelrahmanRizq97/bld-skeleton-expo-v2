@@ -1933,7 +1933,7 @@ Tab-based content switcher.
 #### CustomHeader
 Animated, customizable header component with integrated scrollable content for screens that need per-page header customization.
 - **Import**: `import { CustomHeader } from '@/components/ui/custom-header';`
-- **🚨 CRITICAL: REQUIRED for tab screens**: You MUST use `CustomHeader` for screens inside tab navigators (like `(tabs)/_layout.tsx`). The root Stack header cannot be configured per-tab - it applies globally to all tabs. Even if tabs only differ in title and action buttons, you need `CustomHeader` to have different configurations per tab.
+- **🚨 CRITICAL: REQUIRED for tab screens**: You MUST use `CustomHeader` for screens inside tab navigators (like `(tabs)/_layout.tsx`). The root Stack header cannot be configured per-tab - it applies globally to all tabs. Even if tabs only differ in title and action buttons, you need `CustomHeader` to have different configurations per tab. It usually works well when you use shrink collapse mode with large size headers.
 - **When to use**: 
   - **Tab layouts** - Each tab needs its own title, buttons, or collapse behavior (most common use case)
   - **Grouped routes** - Any route group where different screens need different header configurations
