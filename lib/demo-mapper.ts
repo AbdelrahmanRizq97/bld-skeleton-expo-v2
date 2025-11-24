@@ -11,6 +11,7 @@ import { CardDemo } from '@/components/demos/card-demo';
 import { CheckboxDemo } from '@/components/demos/checkbox-demo';
 import { CollapsibleDemo } from '@/components/demos/collapsible-demo';
 import { ContextMenuDemo } from '@/components/demos/contextmenu-demo';
+import CustomHeaderDemo from '@/components/demos/customheader-demo';
 import { DatePickerDemo } from '@/components/demos/datepicker-demo';
 import { DialogDemo } from '@/components/demos/dialog-demo';
 import { DropdownMenuDemo } from '@/components/demos/dropdownmenu-demo';
@@ -50,6 +51,7 @@ const DEMO_MAP: Record<string, DemoComponent> = {
   Checkbox: CheckboxDemo,
   Collapsible: CollapsibleDemo,
   ContextMenu: ContextMenuDemo,
+  CustomHeader: CustomHeaderDemo,
   DatePicker: DatePickerDemo,
   Dialog: DialogDemo,
   DropdownMenu: DropdownMenuDemo,
