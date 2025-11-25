@@ -18,6 +18,7 @@ export const COMPONENTS = [
   'DropdownMenu',
   'HoverCard',
   'Input',
+  'Kanban',
   'Label',
   'Menubar',
   'Popover',
