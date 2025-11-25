@@ -2,34 +2,39 @@
 
 - **ALWAYS replace `app/index.tsx`** with a redirect to your actual app when building a new feature. The skeleton provides a component showcase template at `app/index.tsx` that will be the landing page.
 - **🚨 NEVER use `as any` type casts with Redirect** - This can cause "This screen doesn't exist" errors and routing failures.
-- **Redirect strategy**: Always redirect to a specific screen, never to a route group alone.
-  - **IF using tabs**: Use `<Redirect href="/(tabs)/screen-name" />` where `screen-name` is your default tab (e.g., `playdates`, `overview`, `home`)
-  - **IF NOT using tabs**: Use `<Redirect href="/screen-name" />` to your main screen
-  - **🚨 DO NOT create `index.tsx` inside `(tabs)`** - All tabs should have semantic names (e.g., `playdates.tsx`, `contacts.tsx`) for clarity
+- **Redirect strategy depends on whether your route group has an index file**:
+  - **IF the route group HAS an `index.tsx`**: Use `<Redirect href="/(tabs)" />` - Expo Router automatically loads it
+  - **IF the route group has NO `index.tsx`**: Use `<Redirect href="/(tabs)/screen-name" />` - Specify which screen to load
+  - Check your file structure to determine which pattern applies to your app
 
 ```tsx
-// ✅ CORRECT - Tab-based app with named tabs
+// ✅ CORRECT - Route group WITH index.tsx file inside
 import { Redirect } from 'expo-router';
 
 export default function RootIndex() {
-  return <Redirect href="/(tabs)/playdates" />;
+  return <Redirect href="/(tabs)" />;
 }
 
-// ✅ CORRECT - Non-tab app
+// ✅ CORRECT - Route group WITHOUT index.tsx file (must specify screen)
 import { Redirect } from 'expo-router';
 
 export default function RootIndex() {
-  return <Redirect href="/home" />;
+  return <Redirect href="/(tabs)/overview" />;
 }
 
 // ❌ WRONG - Using 'as any' type cast
 export default function RootIndex() {
-  return <Redirect href="/(tabs)/playdates" as any />; // Causes routing errors!
+  return <Redirect href="/(tabs)/index" as any />; // Causes routing errors!
 }
 
-// ❌ WRONG - Redirecting to group without specific screen
+// ❌ WRONG - Redirecting to group that has no index.tsx
 export default function RootIndex() {
-  return <Redirect href="/(tabs)" />; // "This screen doesn't exist" error!
+  return <Redirect href="/(tabs)" />; // "This screen doesn't exist" if no index.tsx!
+}
+
+// ❌ WRONG - Redundant path when index file exists
+export default function RootIndex() {
+  return <Redirect href="/(tabs)/index" />; // Just use "/(tabs)" instead
 }
 ```
 
@@ -93,7 +98,7 @@ export default function RootLayout() {
 - **NEVER use `useEffect` + `router.replace()` for redirects** - This causes "Attempted to navigate before mounting the Root Layout component" errors.
 - **ALWAYS use `<Redirect>` component** for declarative redirects in screen components.
 - **🚨 NEVER use `as any` type casts with navigation** - This breaks type safety and can cause "This screen doesn't exist" errors.
-- **Always redirect to specific screens, not route groups** - Use `/(tabs)/screen-name` to specify which tab to load.
+- **Route to groups, not index files** - Use `/(tabs)` instead of `/(tabs)/index`. Expo Router handles index resolution automatically.
 - **Example**:
 
 ```tsx
@@ -104,7 +109,7 @@ import { useRouter } from 'expo-router';
 export default function Index() {
   const router = useRouter();
   useEffect(() => {
-    router.replace('/(tabs)/playdates');
+    router.replace('/(tabs)');
   }, []);
   return null;
 }
@@ -113,19 +118,19 @@ export default function Index() {
 import { Redirect } from 'expo-router';
 
 export default function Index() {
-  return <Redirect href="/(tabs)/playdates" as any />; // DO NOT DO THIS!
+  return <Redirect href="/(tabs)" as any />; // DO NOT DO THIS!
 }
 
-// ❌ WRONG - Redirecting to group without specific screen
+// ❌ WRONG - Redundant index path
 export default function Index() {
-  return <Redirect href="/(tabs)" />; // "This screen doesn't exist" error!
+  return <Redirect href="/(tabs)/index" />; // Just use "/(tabs)"
 }
 
-// ✅ CORRECT - Use Redirect component with specific screen
+// ✅ CORRECT - Use Redirect component without type casts
 import { Redirect } from 'expo-router';
 
 export default function Index() {
-  return <Redirect href="/(tabs)/playdates" />;
+  return <Redirect href="/(tabs)" />;
 }
 ```
 
@@ -155,10 +160,10 @@ Place ONLY your main tab screens inside `app/(tabs)/`, and keep all other screen
 ```
 app/
 ├── _layout.tsx                    # Root Stack navigator
-├── index.tsx                      # Redirect to /(tabs)/playdates
+├── index.tsx                      # Redirect to /(tabs)
 ├── (tabs)/                        # 🟢 Tab navigator folder
 │   ├── _layout.tsx                # Tabs configuration
-│   ├── playdates.tsx              # Main tab: Playdates
+│   ├── index.tsx                  # Main tab: Playdates
 │   ├── contacts.tsx               # Main tab: Contacts
 │   └── settings.tsx               # Main tab: Settings
 ├── create-contact.tsx             # 🟢 Stack screen (not a tab!)
@@ -183,7 +188,7 @@ export default function TabsLayout() {
   return (
     <Tabs screenOptions={{ headerShown: false }}>
       <Tabs.Screen
-        name="playdates"
+        name="index"
         options={{
           title: 'Playdates',
           tabBarIcon: ({ color, size }) => <Calendar size={size} color={color} />,
@@ -232,7 +237,7 @@ router.push('/edit-playdate/456');        // Not /(tabs)/edit-playdate/456
 ```tsx
 // ❌ WRONG - Putting everything inside (tabs) folder
 app/(tabs)/
-  ├── playdates.tsx
+  ├── index.tsx
   ├── contacts.tsx
   ├── settings.tsx
   ├── create-contact.tsx          // ❌ Should be at app root!
@@ -242,7 +247,7 @@ app/(tabs)/
 // ✅ CORRECT - Only main tabs inside, others at root
 app/
   ├── (tabs)/
-  │   ├── playdates.tsx           // ✅ Main tab
+  │   ├── index.tsx               // ✅ Main tab
   │   ├── contacts.tsx            // ✅ Main tab
   │   └── settings.tsx            // ✅ Main tab
   ├── create-contact.tsx          // ✅ Stack screen
@@ -1287,6 +1292,190 @@ Composable card layout with structured sections and multiple style variants.
 </View>
 ```
 
+#### Kanban
+Generic, fully customizable Kanban board component with TypeScript generics. Perfect for pipeline views, project boards, or any workflow that involves moving items between stages.
+
+- **Import**: `import { Kanban, type KanbanStage } from '@/components/ui/kanban';`
+- **🚨 CRITICAL: Requires `GestureHandlerRootView`** - Kanban uses bottom sheets, which require `GestureHandlerRootView` wrapping your app root. See "Critical Setup Requirements" section.
+- **Features**:
+  - TypeScript generics for type-safe usage with any data model
+  - Automatic item filtering by stage
+  - Built-in haptic feedback on long press
+  - Customizable card rendering
+  - Optional value aggregation per column (e.g., sum of amounts)
+  - Dark/light mode support with per-stage color customization
+  - Built-in bottom sheet for moving items (overridable)
+  - Customizable column dimensions and behavior
+
+- **Basic Usage**:
+```tsx
+import { Kanban, type KanbanStage } from '@/components/ui/kanban';
+
+// Define your data type
+interface Task {
+  id: string;
+  title: string;
+  status: 'todo' | 'in_progress' | 'done';
+  priority: 'high' | 'medium' | 'low';
+}
+
+// Define stages
+const TASK_STAGES: KanbanStage<'todo' | 'in_progress' | 'done'>[] = [
+  { id: 'todo', label: 'To Do', color: '#6B7280', colorDark: '#9CA3AF' },
+  { id: 'in_progress', label: 'In Progress', color: '#3B82F6', colorDark: '#60A5FA' },
+  { id: 'done', label: 'Done', color: '#22C55E', colorDark: '#4ADE80' },
+];
+
+function TaskBoard() {
+  const [tasks, setTasks] = useState<Task[]>([/* ... */]);
+
+  return (
+    <Kanban<Task, 'todo' | 'in_progress' | 'done'>
+      data={tasks}
+      stageKey="status"
+      stages={TASK_STAGES}
+      renderCard={(task) => (
+        <Card className="mb-2 py-1">
+          <CardContent className="gap-2 py-3">
+            <Text className="font-medium">{task.title}</Text>
+            <Badge>{task.priority}</Badge>
+          </CardContent>
+        </Card>
+      )}
+      renderEmptyState={(stage, label) => (
+        <Text className="text-xs text-muted-foreground">No {label}</Text>
+      )}
+      onMoveItem={(task, toStage) => {
+        // Update task status
+        setTasks(tasks.map(t => 
+          t.id === task.id ? { ...t, status: toStage } : t
+        ));
+      }}
+      onCardPress={(task) => {
+        // Navigate to task detail
+        router.push(`/task/${task.id}`);
+      }}
+    />
+  );
+}
+```
+
+- **With Value Aggregation** (e.g., fundraising pipeline with commitment amounts):
+```tsx
+interface Investor {
+  id: string;
+  name: string;
+  stage: PipelineStage;
+  commitmentAmount: number;
+}
+
+<Kanban<Investor, PipelineStage>
+  data={investors}
+  stageKey="stage"
+  stages={PIPELINE_STAGES}
+  renderCard={renderInvestorCard}
+  renderEmptyState={renderEmptyState}
+  onMoveItem={handleMove}
+  valueExtractor={(investor) => investor.commitmentAmount}
+  formatValue={(total) => `$${(total / 1000000).toFixed(1)}M`}
+/>
+```
+
+- **Custom Column Dimensions**:
+```tsx
+<Kanban
+  // ... other props
+  columnWidth={300}      // default: 256
+  columnMinHeight={500}  // default: 400
+  enableHaptics={true}   // default: true
+/>
+```
+
+- **Custom Bottom Sheet** (override default):
+```tsx
+<Kanban
+  // ... other props
+  renderMoveSheet={(item, stages, onMove, onClose) => (
+    <BottomSheetView className="flex-1 px-6 pb-8">
+      <Text className="mb-4 text-lg font-semibold">Move {item?.title}?</Text>
+      {stages.map(stage => (
+        <Button key={stage.id} onPress={() => onMove(stage.id)}>
+          <Text>Move to {stage.label}</Text>
+        </Button>
+      ))}
+    </BottomSheetView>
+  )}
+/>
+```
+
+- **Props Reference**:
+  - `data: T[]` - Array of items to display
+  - `stageKey: keyof T` - Property name that holds the stage value
+  - `stages: KanbanStage<S>[]` - Array of stage configurations
+  - `renderCard: (item: T, onLongPress: () => void) => ReactNode` - Function to render each card
+  - `renderEmptyState: (stage: S, stageLabel: string) => ReactNode` - Function to render empty column state
+  - `onMoveItem: (item: T, toStage: S) => void` - Callback when item is moved to new stage
+  - `onCardPress?: (item: T) => void` - Optional callback when card is tapped
+  - `valueExtractor?: (item: T) => number` - Optional function to extract numeric value for aggregation
+  - `formatValue?: (total: number) => string` - Optional formatter for aggregated values
+  - `columnWidth?: number` - Width of each column (default: 256)
+  - `columnMinHeight?: number` - Minimum height of each column (default: 400)
+  - `enableHaptics?: boolean` - Enable haptic feedback on long press (default: true)
+  - `renderMoveSheet?: (item, stages, onMove, onClose) => ReactNode` - Custom bottom sheet renderer
+
+- **KanbanStage Interface**:
+  - `id: S` - Unique stage identifier (must match your data type)
+  - `label: string` - Display label for the stage
+  - `color: string` - Stage color for light mode (hex, rgb, or rgba)
+  - `colorDark?: string` - Optional stage color for dark mode (falls back to `color` if not provided)
+
+- **🚨 CRITICAL: TypeScript Generics** - Always specify both generic types when using Kanban: `Kanban<ItemType, StageType>`. This ensures type safety for all callbacks and data handling.
+
+- **🚨 CRITICAL: Long Press to Move** - The component uses long press (300ms) to activate move mode. Always show a hint to users about this interaction pattern.
+
+- **Real-World Example** (from fundraising pipeline):
+```tsx
+// See app/(tabs)/pipeline.tsx for complete implementation
+const KANBAN_STAGES: KanbanStage<PipelineStage>[] = [
+  { id: 'prospect', label: 'Prospect', color: '#6B7280' },
+  { id: 'contacted', label: 'Contacted', color: '#3B82F6' },
+  { id: 'meeting', label: 'Meeting', color: '#8B5CF6' },
+  { id: 'due_diligence', label: 'Due Diligence', color: '#F59E0B' },
+  { id: 'term_sheet', label: 'Term Sheet', color: '#10B981' },
+  { id: 'closed', label: 'Closed', color: '#22C55E' },
+];
+
+<Kanban<Investor, PipelineStage>
+  data={investors}
+  stageKey="stage"
+  stages={KANBAN_STAGES}
+  renderCard={(investor) => (
+    <Card className="mb-2 py-1">
+      <CardContent className="gap-2 py-3">
+        <Text className="font-medium">{investor.name}</Text>
+        <Text className="text-xs text-muted-foreground">{investor.firm}</Text>
+        {investor.commitmentAmount > 0 && (
+          <Text className="text-xs text-green-600">
+            ${(investor.commitmentAmount / 1000).toFixed(0)}K
+          </Text>
+        )}
+      </CardContent>
+    </Card>
+  )}
+  renderEmptyState={(stage, label) => (
+    <Text className="text-xs text-muted-foreground">No {label}</Text>
+  )}
+  onMoveItem={(investor, toStage) => {
+    moveInvestorToStage(investor.id, toStage);
+  }}
+  onCardPress={(investor) => {
+    router.push(`/investor/${investor.id}`);
+  }}
+  valueExtractor={(investor) => investor.commitmentAmount || 0}
+  formatValue={(total) => `$${(total / 1000000).toFixed(1)}M`}
+/>
+```
+
 #### Separator
 Visual divider line.
 - **Usage**: `<Separator />`
@@ -1933,7 +2122,7 @@ Tab-based content switcher.
 #### CustomHeader
 Animated, customizable header component with integrated scrollable content for screens that need per-page header customization.
 - **Import**: `import { CustomHeader } from '@/components/ui/custom-header';`
-- **🚨 CRITICAL: REQUIRED for tab screens**: You MUST use `CustomHeader` for screens inside tab navigators (like `(tabs)/_layout.tsx`). The root Stack header cannot be configured per-tab - it applies globally to all tabs. Even if tabs only differ in title and action buttons, you need `CustomHeader` to have different configurations per tab. It usually works well when you use shrink collapse mode with large size headers.
+- **🚨 CRITICAL: REQUIRED for tab screens**: You MUST use `CustomHeader` for screens inside tab navigators (like `(tabs)/_layout.tsx`). The root Stack header cannot be configured per-tab - it applies globally to all tabs. Even if tabs only differ in title and action buttons, you need `CustomHeader` to have different configurations per tab.
 - **When to use**: 
   - **Tab layouts** - Each tab needs its own title, buttons, or collapse behavior (most common use case)
   - **Grouped routes** - Any route group where different screens need different header configurations

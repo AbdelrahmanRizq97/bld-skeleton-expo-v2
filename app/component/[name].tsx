@@ -15,6 +15,10 @@ export default function ComponentDemo() {
     : 'Unknown';
 
   const DemoComponent = getDemoComponent(componentName);
+  
+  // Full-width components that handle their own padding
+  const fullWidthComponents = ['Kanban'];
+  const isFullWidth = fullWidthComponents.includes(componentName);
 
   return (
     <>
@@ -26,7 +30,7 @@ export default function ComponentDemo() {
       />
       <SafeAreaView className="flex-1 bg-background" edges={['bottom']}>
         <ScrollView className="flex-1">
-          <View className="p-6">
+          <View className={isFullWidth ? '' : 'p-6'}>
             {DemoComponent ? (
               <DemoComponent />
             ) : (

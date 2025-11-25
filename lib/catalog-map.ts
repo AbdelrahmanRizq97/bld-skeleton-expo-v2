@@ -16,6 +16,7 @@ import { DialogDemo } from '@/components/catalog/dialog-demo';
 import { DropdownMenuDemo } from '@/components/catalog/dropdownmenu-demo';
 import { HoverCardDemo } from '@/components/catalog/hovercard-demo';
 import { InputDemo } from '@/components/catalog/input-demo';
+import { KanbanDemo } from '@/components/catalog/kanban-demo';
 import { LabelDemo } from '@/components/catalog/label-demo';
 import { MenubarDemo } from '@/components/catalog/menubar-demo';
 import { PopoverDemo } from '@/components/catalog/popover-demo';
@@ -58,6 +59,7 @@ const CATALOG_MAP: Record<string, DemoComponent> = {
   DropdownMenu: DropdownMenuDemo,
   HoverCard: HoverCardDemo,
   Input: InputDemo,
+  Kanban: KanbanDemo,
   Label: LabelDemo,
   Menubar: MenubarDemo,
   Popover: PopoverDemo,
