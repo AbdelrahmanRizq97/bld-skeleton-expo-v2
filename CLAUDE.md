@@ -1203,6 +1203,10 @@ Lucide icon wrapper. Pass icon component via `as` prop.
 #### Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter
 Composable card layout with structured sections and multiple style variants.
 - **Variants**: `default`, `outline`, `elevated`, `gradient`
+- **Sizes**: `sm`, `md`, `lg` - Controls padding and spacing throughout the card
+  - `sm` (small): Minimal padding (`py-1`, `px-2`) - Perfect for game cells, grid items, compact data displays
+  - `md` (medium): Balanced padding (`py-4`, `px-5`) - Default size for standard cards, forms, content blocks
+  - `lg` (large): Spacious padding (`py-6`, `px-6`) - Hero sections, featured content, dashboard summaries
 - **Basic Usage**:
 ```tsx
 <Card>
@@ -1238,37 +1242,88 @@ Composable card layout with structured sections and multiple style variants.
   </CardContent>
 </Card>
 ```
+- **Size Usage**:
+```tsx
+// Small - Sudoku cells, Wordle letter tiles, game grids
+<View className="flex-row gap-1">
+  {[5, 3, 9].map((num) => (
+    <Card key={num} size="sm" className="w-12 h-12 items-center justify-center">
+      <CardContent>
+        <Text className="text-lg font-bold">{num}</Text>
+      </CardContent>
+    </Card>
+  ))}
+</View>
+
+// Medium (default) - Standard content cards, list items, forms
+<Card size="md">
+  <CardHeader>
+    <CardTitle>Today's Puzzle</CardTitle>
+    <CardDescription>Complete the grid</CardDescription>
+  </CardHeader>
+  <CardContent>
+    <Text>Standard card with balanced padding for most use cases.</Text>
+  </CardContent>
+</Card>
+
+// Large - Dashboard hero cards, featured content, onboarding
+<Card size="lg">
+  <CardHeader>
+    <CardTitle>Welcome Back!</CardTitle>
+    <CardDescription>Your daily streak: 15 days 🔥</CardDescription>
+  </CardHeader>
+  <CardContent>
+    <Text>Large cards provide breathing room for important, featured content.</Text>
+  </CardContent>
+</Card>
+```
+- **When to use each size**:
+  - **`sm`**: Game cells (Sudoku, Wordle, chess boards), compact grids, tag chips, notification badges, color swatches
+  - **`md`**: Most cards - content blocks, list items, form containers, settings panels, product cards
+  - **`lg`**: Hero sections, welcome cards, dashboard summaries, featured items, onboarding screens
 - **Gradient Props**:
   - `gradientColors`: `[string, string]` - Required array of two hex colors for gradient
   - `gradientStart`: `{ x: number; y: number }` - Gradient start point (default: `{x:0, y:0}`)
   - `gradientEnd`: `{ x: number; y: number }` - Gradient end point (default: `{x:1, y:1}`)
 - **🚨 CRITICAL: Gradient card text color** - When using `variant="gradient"`, all text inside automatically becomes white for proper contrast. For custom text colors, add `className="text-white"` or other color classes to override.
-- **🚨 CRITICAL: CardContent has built-in padding** - CardContent now has `px-4 py-4` (16px all around) built into the component. You should NOT add additional padding classes unless you need more spacing. The padding is already applied automatically.
+- **🚨 CRITICAL: Card size propagates to children** - Setting `size` on `Card` automatically adjusts padding for `CardHeader`, `CardContent`, and `CardFooter` via React Context. No need to set size on child components.
+- **🚨 CRITICAL: CardContent padding is size-dependent** - CardContent padding varies by card size (`sm`: `px-2`, `md`: `px-5`, `lg`: `px-6`). The padding is already applied automatically based on the parent Card's size prop.
 - **🚨 CRITICAL: Maximum 2 cards horizontally** - Mobile screens are too narrow for 3+ cards side-by-side. Never place more than 2 cards in a horizontal row. For 3+ items, use a vertical stack or a 2-column grid layout.
 - **Examples**:
 ```tsx
-// ✅ CORRECT - CardContent has automatic padding
-<Card>
+// ✅ CORRECT - Small cards for game grids (Wordle-style)
+<View className="flex-row gap-1">
+  {['W', 'O', 'R', 'D', 'S'].map((letter, i) => (
+    <Card key={i} size="sm" className="w-14 h-14 items-center justify-center bg-green-600">
+      <CardContent>
+        <Text className="text-2xl font-bold text-white">{letter}</Text>
+      </CardContent>
+    </Card>
+  ))}
+</View>
+
+// ✅ CORRECT - Medium card (default) for standard content
+<Card size="md">
+  <CardHeader>
+    <CardTitle>Settings</CardTitle>
+  </CardHeader>
   <CardContent>
-    <Text>Content with built-in padding (16px all around)</Text>
+    <Text>Medium size provides balanced padding for most use cases.</Text>
   </CardContent>
 </Card>
 
-// ✅ CORRECT - Override padding if needed
-<Card>
-  <CardContent className="p-8">
-    <Text>Custom larger padding</Text>
-  </CardContent>
-</Card>
-
-// ✅ CORRECT - Gradient card with automatic white text
-<Card variant="gradient" gradientColors={['#3B82F6', '#06B6D4']}>
+// ✅ CORRECT - Large card for featured/hero content
+<Card size="lg" variant="gradient" gradientColors={['#3B82F6', '#06B6D4']}>
+  <CardHeader>
+    <CardTitle>Welcome Back!</CardTitle>
+    <CardDescription>Your progress this week</CardDescription>
+  </CardHeader>
   <CardContent>
-    <Text className="text-white">Blue gradient card</Text>
+    <Text className="text-white">Large cards give important content room to breathe.</Text>
   </CardContent>
 </Card>
 
-// ✅ CORRECT - Max 2 cards horizontally
+// ✅ CORRECT - Max 2 cards horizontally (small cards can have more)
 <View className="flex-row gap-4">
   <Card className="flex-1">
     <CardContent><Text>Card 1</Text></CardContent>
@@ -1278,7 +1333,18 @@ Composable card layout with structured sections and multiple style variants.
   </Card>
 </View>
 
-// ❌ WRONG - 3 cards side-by-side is too cramped on mobile
+// ✅ CORRECT - Small cards can be used in grids (game boards, etc.)
+<View className="flex-row flex-wrap gap-1">
+  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+    <Card key={num} size="sm" className="w-10 h-10 items-center justify-center">
+      <CardContent>
+        <Text className="font-semibold">{num}</Text>
+      </CardContent>
+    </Card>
+  ))}
+</View>
+
+// ❌ WRONG - 3 medium/large cards side-by-side is too cramped on mobile
 <View className="flex-row gap-2">
   <Card className="flex-1">
     <CardContent><Text>Card 1</Text></CardContent>

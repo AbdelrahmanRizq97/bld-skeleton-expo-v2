@@ -13,16 +13,49 @@ import { View } from 'react-native';
 export function CardDemo() {
   return (
     <View className="gap-8">
-      {/* Basic */}
+      {/* Size Variants */}
       <View className="gap-3">
-        <Text variant="h3">Basic Card</Text>
-        <Card>
+        <Text variant="h3">Card Sizes</Text>
+        
+        {/* Small */}
+        <View className="flex-row gap-1">
+          <Card size="sm" className="w-12 h-12 items-center justify-center">
+            <CardContent>
+              <Text className="text-lg font-bold text-center">5</Text>
+            </CardContent>
+          </Card>
+          <Card size="sm" className="w-12 h-12 items-center justify-center">
+            <CardContent>
+              <Text className="text-lg font-bold text-center">3</Text>
+            </CardContent>
+          </Card>
+          <Card size="sm" className="w-12 h-12 items-center justify-center">
+            <CardContent>
+              <Text className="text-lg font-bold text-center">9</Text>
+            </CardContent>
+          </Card>
+        </View>
+        <Text className="text-muted-foreground text-sm">Small cards - great for game cells, compact lists</Text>
+
+        {/* Medium (default) */}
+        <Card size="md">
           <CardHeader>
-            <CardTitle>Card Title</CardTitle>
-            <CardDescription>Card description goes here</CardDescription>
+            <CardTitle>Medium Card</CardTitle>
+            <CardDescription>Default balanced padding</CardDescription>
           </CardHeader>
           <CardContent>
-            <Text>This is the main content area of the card.</Text>
+            <Text>This card uses size="md" which is the default size.</Text>
+          </CardContent>
+        </Card>
+
+        {/* Large */}
+        <Card size="lg">
+          <CardHeader>
+            <CardTitle>Large Card</CardTitle>
+            <CardDescription>Spacious padding for emphasis</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Text>This card uses size="lg" for more breathing room.</Text>
           </CardContent>
         </Card>
       </View>
@@ -30,7 +63,7 @@ export function CardDemo() {
       {/* With Footer */}
       <View className="gap-3">
         <Text variant="h3">With Footer</Text>
-        <Card>
+        <Card size="md">
           <CardHeader>
             <CardTitle>Featured Project</CardTitle>
             <CardDescription>An example project showcase</CardDescription>
@@ -52,26 +85,17 @@ export function CardDemo() {
         </Card>
       </View>
 
-      {/* Multiple Cards */}
+      {/* Grid of Small Cards */}
       <View className="gap-3">
-        <Text variant="h3">Multiple Cards</Text>
-        <View className="gap-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>Card 1</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Text>First card content</Text>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Card 2</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Text>Second card content</Text>
-            </CardContent>
-          </Card>
+        <Text variant="h3">Grid Layout (Small)</Text>
+        <View className="flex-row flex-wrap gap-1">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+            <Card key={num} size="sm" className="w-10 h-10 items-center justify-center">
+              <CardContent>
+                <Text className="font-semibold">{num}</Text>
+              </CardContent>
+            </Card>
+          ))}
         </View>
       </View>
     </View>

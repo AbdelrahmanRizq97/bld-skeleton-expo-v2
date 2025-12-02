@@ -3,9 +3,14 @@ import { cn } from '@/lib/utils';
 import { View, type ViewProps } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { createContext, useContext } from 'react';
+
+type CardSize = 'sm' | 'md' | 'lg';
+
+const CardSizeContext = createContext<CardSize>('md');
 
 const cardVariants = cva(
-  'flex flex-col gap-6 rounded-xl py-6 shadow-sm shadow-black/5',
+  'flex flex-col rounded-xl shadow-sm shadow-black/5',
   {
     variants: {
       variant: {
@@ -14,9 +19,15 @@ const cardVariants = cva(
         elevated: 'bg-card',
         gradient: '',
       },
+      size: {
+        sm: 'gap-1 py-1',
+        md: 'gap-4 py-4',
+        lg: 'gap-6 py-6',
+      },
     },
     defaultVariants: {
       variant: 'default',
+      size: 'md',
     },
   }
 );
@@ -25,46 +36,64 @@ interface CardProps extends ViewProps, VariantProps<typeof cardVariants> {
   gradientColors?: [string, string];
   gradientStart?: { x: number; y: number };
   gradientEnd?: { x: number; y: number };
+  size?: CardSize;
 }
 
 function Card({ 
   className, 
   variant = 'default',
+  size = 'md',
   gradientColors,
   gradientStart = { x: 0, y: 0 },
   gradientEnd = { x: 1, y: 1 },
   children,
   ...props 
 }: CardProps) {
+  const sizeClasses = {
+    sm: 'gap-1 py-1',
+    md: 'gap-4 py-4',
+    lg: 'gap-6 py-6',
+  };
+
   if (variant === 'gradient' && gradientColors) {
     return (
-      <TextClassContext.Provider value="text-white">
-        <View className={cn('rounded-xl overflow-hidden', className)} {...props}>
-          <LinearGradient
-            colors={gradientColors}
-            start={gradientStart}
-            end={gradientEnd}
-            className="flex flex-col gap-6 py-6">
-            {children}
-          </LinearGradient>
-        </View>
-      </TextClassContext.Provider>
+      <CardSizeContext.Provider value={size}>
+        <TextClassContext.Provider value="text-white">
+          <View className={cn('rounded-xl overflow-hidden', className)} {...props}>
+            <LinearGradient
+              colors={gradientColors}
+              start={gradientStart}
+              end={gradientEnd}
+              className={cn('flex flex-col', sizeClasses[size])}>
+              {children}
+            </LinearGradient>
+          </View>
+        </TextClassContext.Provider>
+      </CardSizeContext.Provider>
     );
   }
 
   return (
-    <TextClassContext.Provider value="text-card-foreground">
-      <View
-        className={cn(cardVariants({ variant }), className)}
-        {...props}>
-        {children}
-      </View>
-    </TextClassContext.Provider>
+    <CardSizeContext.Provider value={size}>
+      <TextClassContext.Provider value="text-card-foreground">
+        <View
+          className={cn(cardVariants({ variant, size }), className)}
+          {...props}>
+          {children}
+        </View>
+      </TextClassContext.Provider>
+    </CardSizeContext.Provider>
   );
 }
 
 function CardHeader({ className, ...props }: ViewProps & React.RefAttributes<View>) {
-  return <View className={cn('flex flex-col gap-1.5 px-6', className)} {...props} />;
+  const size = useContext(CardSizeContext);
+  const sizeClasses = {
+    sm: 'px-2 gap-0.5',
+    md: 'px-5 gap-1.5',
+    lg: 'px-6 gap-1.5',
+  };
+  return <View className={cn('flex flex-col', sizeClasses[size], className)} {...props} />;
 }
 
 function CardTitle({
@@ -89,11 +118,23 @@ function CardDescription({
 }
 
 function CardContent({ className, ...props }: ViewProps & React.RefAttributes<View>) {
-  return <View className={cn('px-4 py-4', className)} {...props} />;
+  const size = useContext(CardSizeContext);
+  const sizeClasses = {
+    sm: 'px-2',
+    md: 'px-5',
+    lg: 'px-6',
+  };
+  return <View className={cn(sizeClasses[size], className)} {...props} />;
 }
 
 function CardFooter({ className, ...props }: ViewProps & React.RefAttributes<View>) {
-  return <View className={cn('flex flex-row items-center px-6', className)} {...props} />;
+  const size = useContext(CardSizeContext);
+  const sizeClasses = {
+    sm: 'px-2',
+    md: 'px-5',
+    lg: 'px-6',
+  };
+  return <View className={cn('flex flex-row items-center', sizeClasses[size], className)} {...props} />;
 }
 
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle };
