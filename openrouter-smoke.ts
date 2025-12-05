@@ -36,45 +36,6 @@ const callProxy = async (label: string, payload: ProxyRequest["payload"]) => {
 	console.log(text);
 };
 
-const callStreamingProxy = async (label: string, payload: ProxyRequest["payload"]) => {
-	console.log(`\n=== ${label} (stream) ===`);
-	const body: ProxyRequest = {
-		endpoint: "chat.completions",
-		payload,
-		metadata: { requestId: `smoke-${label.toLowerCase().replace(/\s+/g, "-")}` },
-	};
-
-	const res = await fetch(ENDPOINT, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(body),
-	});
-
-	if (!res.ok) {
-		const errorText = await res.text();
-		console.error(`Streaming request failed (${res.status}): ${errorText}`);
-		return;
-	}
-
-	if (!res.body) {
-		console.error("Streaming response missing body");
-		return;
-	}
-
-	const reader = res.body.getReader();
-	const decoder = new TextDecoder();
-	while (true) {
-		const { value, done } = await reader.read();
-		if (done) {
-			break;
-		}
-		const chunk = decoder.decode(value, { stream: true });
-		if (chunk.trim()) {
-			console.log(chunk.trim());
-		}
-	}
-};
-
 const callResponsesProxy = async (label: string, payload: ProxyRequest["payload"]) => {
 	console.log(`\n=== ${label} (responses) ===`);
 	const body: ProxyRequest = {
@@ -100,43 +61,6 @@ const callResponsesProxy = async (label: string, payload: ProxyRequest["payload"
 	console.log(text);
 };
 
-const callResponsesStreamingProxy = async (label: string, payload: ProxyRequest["payload"]) => {
-	console.log(`\n=== ${label} (responses stream) ===`);
-	const body: ProxyRequest = {
-		endpoint: "responses",
-		payload,
-		metadata: { requestId: `responses-${label.toLowerCase().replace(/\s+/g, "-")}` },
-	};
-
-	const res = await fetch(ENDPOINT, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(body),
-	});
-
-	if (!res.ok) {
-		const errorText = await res.text();
-		console.error(`Responses streaming failed (${res.status}): ${errorText}`);
-		return;
-	}
-
-	if (!res.body) {
-		console.error("Responses streaming missing body");
-		return;
-	}
-
-	const reader = res.body.getReader();
-	const decoder = new TextDecoder();
-	while (true) {
-		const { value, done } = await reader.read();
-		if (done) break;
-		const chunk = decoder.decode(value, { stream: true });
-		if (chunk.trim()) {
-			console.log(chunk.trim());
-		}
-	}
-};
-
 const textOnlyPayload = {
 	model: "openai/gpt-4o-mini",
 	messages: [
@@ -145,26 +69,10 @@ const textOnlyPayload = {
 	],
 };
 
-const streamingTextPayload = {
-	model: "openai/gpt-4o-mini",
-	stream: true,
-	messages: [
-		{ role: "system", content: "Stream concise poetry responses." },
-		{ role: "user", content: "Write a short haiku about sunrise over mountains." },
-	],
-};
-
 const responsesTextPayload = {
 	model: "openai/gpt-4o-mini",
 	instructions: "You are a concise assistant.",
 	input: "Summarize the benefits of static typing in one line.",
-};
-
-const responsesStreamingTextPayload = {
-	model: "openai/gpt-4o-mini",
-	stream: true,
-	instructions: "Stream concise poetry responses.",
-	input: "Write a haiku about calm oceans.",
 };
 
 const responsesTextToImagePayload = {
@@ -271,9 +179,6 @@ const multimodalToImagePayload = {
 	await callProxy("Text → Text", textOnlyPayload);
 	await sleep(500);
 
-	await callStreamingProxy("Text → Text", streamingTextPayload);
-	await sleep(500);
-
 	await callProxy("Text → Image", textToImagePayload);
 	await sleep(500);
 
@@ -286,9 +191,6 @@ const multimodalToImagePayload = {
     // responses
 
 	await callResponsesProxy("Responses Text → Text", responsesTextPayload);
-	await sleep(500);
-
-	await callResponsesStreamingProxy("Responses Text → Text", responsesStreamingTextPayload);
 	await sleep(500);
 
 	await callResponsesProxy("Responses Text → Image", responsesTextToImagePayload);
@@ -306,36 +208,6 @@ const multimodalToImagePayload = {
 
 // {"success":true,"message":"OpenRouter request completed","responseObject":{"upstream":{"id":"gen-1764926476-0N0195qHFzGljvYKVijc","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion","created":1764926476,"choices":[{"logprobs":null,"finish_reason":"stop","native_finish_reason":"stop","index":0,"message":{"role":"assistant","content":"TypeScript enhances JavaScript development by providing static typing, improved code quality, better tooling, and early error detection, leading to more robust and maintainable codebases.","refusal":null,"reasoning":null}}],"system_fingerprint":"fp_aa07c96156","usage":{"prompt_tokens":29,"completion_tokens":33,"total_tokens":62,"cost":0.00002415,"is_byok":false,"prompt_tokens_details":{"cached_tokens":0,"audio_tokens":0,"video_tokens":0},"cost_details":{"upstream_inference_cost":null,"upstream_inference_prompt_cost":0.00000435,"upstream_inference_completions_cost":0.0000198},"completion_tokens_details":{"reasoning_tokens":0,"image_tokens":0}}},"meta":{"endpoint":"chat.completions","elapsedMs":596,"requestId":"smoke-text-→-text"}},"statusCode":200}
 
-// === Text → Text (stream) ===
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":"D"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":"awn"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":"'s"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":" brush"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":" paints"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":" the"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":" peaks"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":","},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":"  \n"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":"Wh"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":"ispers"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":" of"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":" gold"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":" kiss"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":" the"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":" clouds"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":","},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":"  \n"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":"Mount"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":"ains"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":" wake"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":" in"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":" light"},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":"."},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":"stop","native_finish_reason":"stop","logprobs":null}],"system_fingerprint":"fp_aa07c96156"}
-// {"id":"gen-1764926573-OKIiXgTp68FkD8YI2kmr","provider":"OpenAI","model":"openai/gpt-4o-mini","object":"chat.completion.chunk","created":1764926573,"choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null,"native_finish_reason":null,"logprobs":null}],"usage":{"prompt_tokens":26,"completion_tokens":24,"total_tokens":50,"cost":0.0000183,"is_byok":false,"prompt_tokens_details":{"cached_tokens":0,"audio_tokens":0,"video_tokens":0},"cost_details":{"upstream_inference_cost":null,"upstream_inference_prompt_cost":0.0000039,"upstream_inference_completions_cost":0.0000144},"completion_tokens_details":{"reasoning_tokens":0,"image_tokens":0}}}
-// [DONE]
-
 // === Text → Image ===
 
 // {"success":true,"message":"OpenRouter request completed","responseObject":{"upstream":{"id":"gen-1764926649-tF4W3t4FuuPsXb0VBWLB","provider":"Google AI Studio","model":"google/gemini-2.5-flash-image","object":"chat.completion","created":1764926649,"choices":[{"logprobs":null,"finish_reason":"stop","native_finish_reason":"STOP","index":0,"message":{"role":"assistant","content":"","refusal":null,"reasoning":null,"images":[{"type":"image_url","image_url":{"url":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA....Ywy4AAAAASUVORK5CYII="},"index":0}]}}],"usage":{"prompt_tokens":12,"completion_tokens":1290,"total_tokens":1302,"cost":0.0387036,"is_byok":false,"prompt_tokens_details":{"cached_tokens":0,"audio_tokens":0,"video_tokens":0},"cost_details":{"upstream_inference_cost":null,"upstream_inference_prompt_cost":0.0000036,"upstream_inference_completions_cost":0.0387},"completion_tokens_details":{"reasoning_tokens":0,"image_tokens":1290}}},"meta":{"endpoint":"chat.completions","elapsedMs":8796,"requestId":"smoke-text-→-image"}},"statusCode":200}
@@ -351,40 +223,6 @@ const multimodalToImagePayload = {
 // === Responses Text → Text ===
 
 // {"success":true,"message":"OpenRouter request completed","responseObject":{"upstream":{"object":"response","id":"gen-1764952988-CZnq2358Nq8oGK6YfMBp","created_at":1764952988,"model":"openai/gpt-4o-mini","error":null,"output_text":"","output":[{"role":"assistant","type":"message","status":"completed","content":[{"type":"output_text","text":"Static typing enhances code reliability by catching type-related errors at compile time, improving maintainability and clarity.","annotations":[]}],"id":"msg_tmp_29l61d5jo53"}],"incomplete_details":null,"tools":[],"tool_choice":"auto","parallel_tool_calls":true,"max_output_tokens":null,"temperature":null,"top_p":null,"metadata":{},"background":false,"previous_response_id":null,"service_tier":"auto","truncation":null,"store":false,"instructions":null,"reasoning":null,"safety_identifier":null,"prompt_cache_key":null,"user":null,"usage":{"input_tokens":19,"input_tokens_details":{"cached_tokens":0},"output_tokens":20,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":39,"cost":0.00001485,"is_byok":false,"cost_details":{"upstream_inference_cost":null,"upstream_inference_input_cost":0.00000285,"upstream_inference_output_cost":0.000012}}},"meta":{"endpoint":"responses","elapsedMs":870,"requestId":"responses-responses-text-→-text"}},"statusCode":200}
-
-// === Responses Text → Text (stream) ===
-
-// {"type":"response.created","response":{"object":"response","id":"gen-1764953029-XWn817qfaX1kpKJwh4Wq","created_at":1764953029,"status":"in_progress","error":null,"output_text":"","output":[],"model":"openai/gpt-4o-mini","incomplete_details":null,"max_tool_calls":null,"tools":[],"tool_choice":"auto","parallel_tool_calls":true,"max_output_tokens":null,"temperature":null,"top_p":null,"metadata":{},"background":false,"previous_response_id":null,"service_tier":"auto","truncation":null,"store":false,"instructions":null,"reasoning":null,"safety_identifier":null,"prompt_cache_key":null,"user":null},"sequence_number":0}
-// {"type":"response.in_progress","response":{"object":"response","id":"gen-1764953029-XWn817qfaX1kpKJwh4Wq","created_at":1764953029,"status":"in_progress","error":null,"output_text":"","output":[],"model":"openai/gpt-4o-mini","incomplete_details":null,"max_tool_calls":null,"tools":[],"tool_choice":"auto","parallel_tool_calls":true,"max_output_tokens":null,"temperature":null,"top_p":null,"metadata":{},"background":false,"previous_response_id":null,"service_tier":"auto","truncation":null,"store":false,"instructions":null,"reasoning":null,"safety_identifier":null,"prompt_cache_key":null,"user":null},"sequence_number":1}
-// {"type":"response.output_item.added","output_index":0,"item":{"type":"message","status":"in_progress","content":[],"id":"msg_tmp_jz2q85y7jo8","role":"assistant"},"sequence_number":2}
-// {"type":"response.content_part.added","item_id":"msg_tmp_jz2q85y7jo8","output_index":0,"content_index":0,"part":{"type":"output_text","annotations":[],"text":""},"sequence_number":3}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":"Wh","sequence_number":4}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":"ispers","sequence_number":5}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":" on","sequence_number":6}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":" the","sequence_number":7}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":" waves","sequence_number":8}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":",","sequence_number":9}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":"  \n","sequence_number":10}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":"Gent","sequence_number":11}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":"le","sequence_number":12}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":" tides","sequence_number":13}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":" embrace","sequence_number":14}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":" the","sequence_number":15}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":" shore","sequence_number":16}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":",","sequence_number":17}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":"  \n","sequence_number":18}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":"Peace","sequence_number":19}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":" in","sequence_number":20}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":" twilight","sequence_number":21}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":"'s","sequence_number":22}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":" glow","sequence_number":23}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":".","sequence_number":24}
-// {"type":"response.output_text.delta","logprobs":[],"output_index":0,"item_id":"msg_tmp_jz2q85y7jo8","content_index":0,"delta":"  ","sequence_number":25}
-// {"type":"response.output_text.done","item_id":"msg_tmp_jz2q85y7jo8","output_index":0,"content_index":0,"text":"Whispers on the waves,  \nGentle tides embrace the shore,  \nPeace in twilight's glow.  ","logprobs":[],"sequence_number":26}
-// {"type":"response.content_part.done","item_id":"msg_tmp_jz2q85y7jo8","output_index":0,"content_index":0,"part":{"type":"output_text","annotations":[],"text":"Whispers on the waves,  \nGentle tides embrace the shore,  \nPeace in twilight's glow.  "},"sequence_number":27}
-// {"type":"response.output_item.done","output_index":0,"item":{"type":"message","status":"completed","content":[{"type":"output_text","text":"Whispers on the waves,  \nGentle tides embrace the shore,  \nPeace in twilight's glow.  ","annotations":[]}],"id":"msg_tmp_jz2q85y7jo8","role":"assistant"},"sequence_number":28}
-// {"type":"response.completed","response":{"object":"response","id":"gen-1764953029-XWn817qfaX1kpKJwh4Wq","created_at":1764953029,"model":"openai/gpt-4o-mini","status":"completed","output":[{"type":"message","status":"completed","content":[{"type":"output_text","text":"Whispers on the waves,  \nGentle tides embrace the shore,  \nPeace in twilight's glow.  ","annotations":[]}],"id":"msg_tmp_jz2q85y7jo8","role":"assistant"}],"output_text":"","error":null,"incomplete_details":null,"usage":{"input_tokens":15,"input_tokens_details":{"cached_tokens":0},"output_tokens":22,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":37,"cost":0.00001545,"is_byok":false,"cost_details":{"upstream_inference_cost":null,"upstream_inference_input_cost":0.00000225,"upstream_inference_output_cost":0.0000132}},"max_tool_calls":null,"tools":[],"tool_choice":"auto","parallel_tool_calls":true,"max_output_tokens":null,"temperature":null,"top_p":null,"metadata":{},"background":false,"previous_response_id":null,"service_tier":"auto","truncation":null,"store":false,"instructions":null,"reasoning":null,"safety_identifier":null,"prompt_cache_key":null,"user":null},"sequence_number":29}
-// [DONE]
 
 // === Responses Text → Image ===
 
