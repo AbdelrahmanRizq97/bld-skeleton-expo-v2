@@ -1,11 +1,11 @@
 /**
- * ⚠️ CRITICAL: DO NOT MODIFY THIS FILE ⚠️
+ * ⚠️ CRITICAL: DO NOT REMOVE OR MODIFY THIS FILE ⚠️
  * 
  * This file is the root component for Expo Router integration.
  * It handles the require.context setup for the app directory and must remain unchanged.
  * Any modifications will break routing and module resolution.
  * 
- * LLMs should NEVER attempt to modify, refactor, or "improve" this file.
+ * LLMs should NEVER attempt to remove, modify, refactor, or "improve" this file.
  * This file is managed externally and should remain unchanged.
  */
 

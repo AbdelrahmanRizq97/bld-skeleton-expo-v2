@@ -1,11 +1,11 @@
 /**
- * ⚠️ CRITICAL: DO NOT MODIFY THIS FILE ⚠️
+ * ⚠️ CRITICAL: DO NOT REMOVE OR MODIFY THIS FILE ⚠️
  * 
  * This file is the host entry point for the micro-frontend architecture.
  * It handles React Native AppRegistry registration and must remain unchanged.
  * Any modifications will break the app initialization.
  * 
- * LLMs should NEVER attempt to modify, refactor, or "improve" this file.
+ * LLMs should NEVER attempt to remove, modify, refactor, or "improve" this file.
  * This file is managed externally and should remain unchanged.
  */
 
