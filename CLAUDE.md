@@ -362,6 +362,28 @@ All screen headers should follow a consistent structure: use `h1` variant for th
 
 For list items with small interactive elements (radio buttons, checkboxes), wrap the row in `Pressable` and add `pointerEvents="none"` to the immediate child View so touches pass through to the Pressable, making the entire row clickable.
 
+**🚨 CRITICAL: Overlays and touch zones blocking each other** - Full-screen Views intercept all touches by default, even with transparent backgrounds. This causes two common bugs:
+
+1. **Overlays blocking game/app touches beneath them**: Menu overlays, game-over screens, or modal backgrounds will block taps from reaching interactive elements below. Fix: Add `pointerEvents="box-none"` to overlay Views so touches pass through to the content beneath.
+
+2. **Game touch zones blocking UI overlays**: If you have a full-screen Pressable for game controls, it will block buttons in overlays rendered on top. Fix: Use `pointerEvents={gameState === 'playing' ? 'auto' : 'none'}` to disable the touch zone when overlays are visible.
+
+```tsx
+// Example 1: Menu overlay that lets taps pass through to game area
+<View pointerEvents="box-none" style={{ position: 'absolute', ...StyleSheet.absoluteFillObject }}>
+  <View pointerEvents="box-none" className="items-center">
+    <Text>TAP TO START</Text>
+  </View>
+</View>
+
+// Example 2: Game touch zone that disables when menu is shown  
+<Pressable 
+  style={{ flex: 1 }} 
+  onPress={handleTap}
+  pointerEvents={gameState === 'playing' ? 'auto' : 'none'}
+/>
+```
+
 **This pattern is essential for:**
 - `RadioGroup` items - only the small circle is tappable by default
 - `Checkbox` items - only the checkbox itself is tappable by default
@@ -1181,6 +1203,15 @@ Styled text with semantic variants. Use for all text rendering.
 - **Variants**: `default`, `h1`, `h2`, `h3`, `h4`, `p`, `lead`, `large`, `small`, `muted`, `blockquote`, `code`
 - **Usage**: `<Text variant="h1">Title</Text>`
 - **IMPORTANT**: The `h2` variant includes a built-in `border-b` separator. Avoid using `h2` in headers that already have their own border to prevent redundant separator lines. Instead, use custom text styling like `className="text-2xl font-semibold"` when the container already has a border.
+- **🚨 CRITICAL: Large text needs explicit lineHeight** - When using large `fontSize` values (28px+) in inline styles, React Native may not allocate enough vertical space, causing the top or bottom of characters to be clipped (especially rounded letters like "G", "O", "0"). Always add an explicit `lineHeight` of approximately 1.2× the `fontSize` to prevent text from being cut off.
+
+```tsx
+// ❌ WRONG - Large text may be clipped
+<Text style={{ fontSize: 48, fontWeight: '900' }}>0</Text>
+
+// ✅ CORRECT - Explicit lineHeight prevents clipping
+<Text style={{ fontSize: 48, lineHeight: 58, fontWeight: '900' }}>0</Text>
+```
 
 #### Input
 Single-line text input with consistent styling.

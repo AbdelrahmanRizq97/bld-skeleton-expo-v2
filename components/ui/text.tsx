@@ -2,7 +2,12 @@ import { cn } from '@/lib/utils';
 import * as Slot from '@rn-primitives/slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
-import { Platform, Text as RNText, type Role } from 'react-native';
+import { Platform, Text as RNText, type Role, type TextStyle, StyleSheet } from 'react-native';
+
+// Threshold above which we auto-calculate lineHeight to prevent text clipping
+const LARGE_FONT_THRESHOLD = 28;
+// Multiplier for calculating lineHeight (1.2x fontSize is standard for preventing clipping)
+const LINE_HEIGHT_MULTIPLIER = 1.2;
 
 const textVariants = cva(
   cn(
@@ -68,6 +73,7 @@ function Text({
   className,
   asChild = false,
   variant = 'default',
+  style,
   ...props
 }: React.ComponentProps<typeof RNText> &
   TextVariantProps &
@@ -76,11 +82,34 @@ function Text({
   }) {
   const textClass = React.useContext(TextClassContext);
   const Component = asChild ? Slot.Text : RNText;
+
+  // Auto-calculate lineHeight for large fonts to prevent text clipping
+  const computedStyle = React.useMemo(() => {
+    if (!style) return undefined;
+
+    // Flatten style if it's an array
+    const flatStyle = StyleSheet.flatten(style) as TextStyle;
+    
+    if (
+      flatStyle?.fontSize &&
+      flatStyle.fontSize >= LARGE_FONT_THRESHOLD &&
+      !flatStyle.lineHeight
+    ) {
+      return {
+        ...flatStyle,
+        lineHeight: Math.ceil(flatStyle.fontSize * LINE_HEIGHT_MULTIPLIER),
+      };
+    }
+    
+    return flatStyle;
+  }, [style]);
+
   return (
     <Component
       className={cn(textVariants({ variant }), textClass, className)}
       role={variant ? ROLE[variant] : undefined}
       aria-level={variant ? ARIA_LEVEL[variant] : undefined}
+      style={computedStyle}
       {...props}
     />
   );
