@@ -621,18 +621,45 @@ export default function Screen() {
 ### Keyboard Handling for Forms
 - When building forms with text inputs, wrap your content with `KeyboardAvoidingView` to prevent the keyboard from covering inputs
 - Use `behavior="padding"` for iOS and `behavior="height"` for Android (use `Platform.OS` to differentiate)
-- Set `keyboardVerticalOffset` to account for header height:
-  - **With headers enabled**: Use `keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}` (90px accounts for iOS header + safe area)
-  - **Without headers** (fullscreen): Use `keyboardVerticalOffset={0}`
+- **🚨 CRITICAL: Avoid dead space when keyboard is open** - Multiple mechanisms can try to handle keyboard avoidance simultaneously, creating unwanted gaps:
+  - `KeyboardAvoidingView` with `behavior="padding"`
+  - `contentInsetAdjustmentBehavior="automatic"` on ScrollView
+  - `keyboardVerticalOffset` values
+  - `paddingBottom` on content
+  
+  **To prevent conflicts:**
+  - Set `keyboardVerticalOffset={0}` (not 90) - let other mechanisms handle spacing
+  - Make `contentInsetAdjustmentBehavior` conditional - only apply when keyboard is **hidden**
+  - Add `automaticallyAdjustKeyboardInsets={false}` to ScrollView
+  - Reduce `paddingBottom` when keyboard is visible
 - Add `keyboardShouldPersistTaps="handled"` to ScrollView to allow tapping inputs without dismissing keyboard first
-- Example pattern with headers:
+- Example pattern with proper keyboard handling:
 
 ```tsx
-import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { useState, useEffect } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function FormScreen() {
   const insets = useSafeAreaInsets();
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  // Track keyboard visibility to conditionally apply spacing
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false)
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
   
   return (
     <>
@@ -644,16 +671,17 @@ export default function FormScreen() {
         }}
       />
       <KeyboardAvoidingView
-        className="flex-1"
+        className="flex-1 bg-background"
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
+        keyboardVerticalOffset={0}>
         <ScrollView
-          className="flex-1 bg-background"
-          contentInsetAdjustmentBehavior={Platform.OS === 'ios' ? 'automatic' : undefined}
+          className="flex-1"
+          contentInsetAdjustmentBehavior={Platform.OS === 'ios' && !isKeyboardVisible ? 'automatic' : undefined}
+          automaticallyAdjustKeyboardInsets={false}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
             paddingHorizontal: 20,
-            paddingBottom: Math.max(insets.bottom, 32),
+            paddingBottom: isKeyboardVisible ? 8 : Math.max(insets.bottom, 32),
           }}>
           {/* Your form inputs */}
         </ScrollView>
