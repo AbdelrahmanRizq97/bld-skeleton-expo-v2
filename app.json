@@ -31,7 +31,7 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": [], // LLMs should NEVER attempt to modify 'plugins' array. it must stay empty.
+    "plugins": [],
     "experiments": {
       "typedRoutes": true
     }
