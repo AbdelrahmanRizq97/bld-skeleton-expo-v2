@@ -1,6 +1,6 @@
 // This file is only a reference showing example usage of the Comerge OpenRouter proxy; do not modify or remove it—use it solely as guidance when writing app code.
 
-const BASE_URL = "https://comerge.ai";
+const BASE_URL = "https://api.comerge.ai";
 const ENDPOINT = `${BASE_URL}/v1/openrouter/proxy`;
 
 type ProxyRequest = {
