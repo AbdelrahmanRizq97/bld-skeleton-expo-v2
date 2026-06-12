@@ -1,5 +1,4 @@
 export const COMPONENTS = [
-  'Accordion',
   'ActionSheet',
   'Alert',
   'AlertDialog',
